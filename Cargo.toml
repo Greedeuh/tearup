@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "tearup_macro",
+    "tearup",
+    "tearup_examples"
+]
