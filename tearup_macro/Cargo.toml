@@ -23,6 +23,6 @@ proc-macro2 = "1.0.43"
 macrotest = "1.0"
 trybuild = "1.0"
 # For doc test
-# tearup = "0.1"
+tearup = "0.1"
 async-trait = "0.1.57"
 tokio = { version = "1.20.1", features = ["rt", "macros"] }
