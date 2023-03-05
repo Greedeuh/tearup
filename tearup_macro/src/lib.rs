@@ -4,11 +4,46 @@ use syn::{parse_quote, Ident, ItemFn};
 mod asyncc;
 mod sync;
 
+/// Same as `tearup_test` but does not add turn you function into a `#[test]`
 #[proc_macro_attribute]
 pub fn tearup(attr: TokenStream, input: TokenStream) -> TokenStream {
     tearup_body(attr, input, false)
 }
 
+/// ```
+/// use async_trait::async_trait;
+/// use tearup::{tearup_test, AsyncContext, FromAsyncContext, ReadyFn};
+///
+/// // First define your context
+/// struct YourContext {
+///     something_you_need_in_test: SomethingYouSetup,
+/// }
+///
+/// // Second implement your setup/teardown
+/// #[async_trait]
+/// impl<'a> AsyncContext<'a> for YourContext {
+///     async fn setup(ready: ReadyFn) -> Self { /* do your stuff... */ Self { something_you_need_in_test: SomethingYouSetup{} } }
+///
+///     async fn teardown(&mut self) { /* clean your stuff... */ }
+/// }
+///
+/// // Optionnaly define some setup accessor
+/// // if you need to access something from your setup (like db connection, seed, etc)
+/// #[derive(Clone)]
+/// pub struct SomethingYouSetup;
+/// #[async_trait]
+/// impl FromAsyncContext<'_, YourContext> for SomethingYouSetup {
+///     async fn from_setup(context: &YourContext) -> Self {
+///         context.something_you_need_in_test.clone()
+///     }
+/// }
+///
+/// // And write your tests !
+/// #[tearup_test(YourContext)]
+/// async fn is_should_do_that(mut something_you_need_in_test: SomethingYouSetup) {
+///     // assert something using something_you_need_in_test
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn tearup_test(attr: TokenStream, input: TokenStream) -> TokenStream {
     tearup_body(attr, input, true)

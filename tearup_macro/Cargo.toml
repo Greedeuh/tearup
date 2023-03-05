@@ -14,3 +14,7 @@ proc-macro2 = "1.0.43"
 [dev-dependencies]
 macrotest = "1.0"
 trybuild = "1.0"
+# For doc test
+tearup = { path = "../tearup" }
+async-trait = "0.1.57"
+tokio = { version = "1.20.1", features = ["rt", "macros"] }
