@@ -22,7 +22,11 @@ pub fn tearup(attr: TokenStream, input: TokenStream) -> TokenStream {
 /// // Second implement your setup/teardown
 /// #[async_trait]
 /// impl<'a> AsyncContext<'a> for YourContext {
-///     async fn setup(ready: ReadyFn) -> Self { /* do your stuff... */ Self { something_you_need_in_test: SomethingYouSetup{} } }
+///     async fn setup(ready: ReadyFn) -> Self {
+///         /* do your stuff... */
+///         ready(); // notify that your setup id ready
+///         Self { something_you_need_in_test: SomethingYouSetup{} }
+///     }
 ///
 ///     async fn teardown(&mut self) { /* clean your stuff... */ }
 /// }
