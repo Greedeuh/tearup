@@ -2,6 +2,14 @@
 name = "tearup_macro"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+authors = ["Adrien Olivon <mail@markus-kohlhase.de>"]
+description = "Setup - teardown your tests"
+homepage = "https://github.com/Greedeuh/tearup"
+repository = "https://github.com/Greedeuh/tearup"
+readme = "../README.md"
+keywords = ["test", "setup", "teardown"]
+categories = ["development-tools::testing"]
 
 [lib]
 proc-macro = true
