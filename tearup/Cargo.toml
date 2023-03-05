@@ -12,7 +12,7 @@ keywords = ["test", "setup", "teardown"]
 categories = ["development-tools::testing"]
 
 [dependencies]
-tearup_macro = { path = "../tearup_macro" }
+tearup_macro = "0.1"
 trybuild = "1.0.64"
 macrotest = "1.0.9"
 async-trait = "0.1.57"
