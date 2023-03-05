@@ -35,11 +35,13 @@ fn test_before() {
     });
     let mut context = CContext::setup(ready);
     let db_name = <DbName as tearup::FromContext<CContext>>::from_setup(&context);
-    context
-        .test(
-            move || {
-                if "db_name" == &db_name.0 {}
-            },
-            ready_flag,
-        );
+    context.wait_setup(ready_flag);
+    let text_execution = context
+        .test(move || {
+            if "db_name" == &db_name.0 {}
+        });
+    context.teardown();
+    if let Err(err) = text_execution {
+        std::panic::resume_unwind(err)
+    }
 }

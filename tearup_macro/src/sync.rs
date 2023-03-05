@@ -9,7 +9,7 @@ pub fn body(
     stmts: &Vec<Stmt>,
 ) -> TokenStream {
     let name = sig.ident.clone();
-    let args = define_args(&sig, &context);
+    let let_args = define_args(&sig, &context);
 
     let result = quote! {
 
@@ -24,11 +24,19 @@ pub fn body(
 
             let mut context = #context::setup(ready);
 
-            #args
+            #let_args
 
-            context.test(move || {
+            context.wait_setup(ready_flag);
+
+            let text_execution = context.test(move || {
                 #(#stmts)*
-            }, ready_flag);
+            });
+
+            context.teardown();
+
+            if let Err(err) = text_execution {
+                std::panic::resume_unwind(err)
+            }
         }
 
     };
