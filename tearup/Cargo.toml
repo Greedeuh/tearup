@@ -2,8 +2,14 @@
 name = "tearup"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+authors = ["Adrien Olivon <mail@markus-kohlhase.de>"]
+description = "Setup - teardown your tests"
+homepage = "https://github.com/Greedeuh/tearup"
+repository = "https://github.com/Greedeuh/tearup"
+readme = "../README.md"
+keywords = ["test", "setup", "teardown"]
+categories = ["development-tools::testing"]
 
 [dependencies]
 tearup_macro = { path = "../tearup_macro" }
