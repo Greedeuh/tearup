@@ -1,6 +1,5 @@
 pub use asyncc::*;
 use core::time;
-use std::default;
 pub use syncc::*;
 pub use tearup_macro::{tearup, tearup_test};
 
