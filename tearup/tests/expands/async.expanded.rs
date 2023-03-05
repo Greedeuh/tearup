@@ -38,19 +38,21 @@ async fn test_before() {
         *ready = true;
     });
     let mut context = CContext::setup(ready).await;
+    context.wait_setup(ready_flag).await;
     let db_name = <DbName as tearup::FromAsyncContext<CContext>>::from_setup(&context)
         .await;
-    context
-        .test(
-            move || {
-                async move {
-                    foo(&db_name).await;
-                }
-                    .boxed()
-            },
-            ready_flag,
-        )
+    let text_execution = context
+        .test(move || {
+            async move {
+                foo(&db_name).await;
+            }
+                .boxed()
+        })
         .await;
+    context.teardown().await;
+    if let Err(err) = text_execution {
+        std::panic::resume_unwind(err)
+    }
 }
 async fn foo(db_name: &DbName) {
     if "db_name" == db_name.0 {}
