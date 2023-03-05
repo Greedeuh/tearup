@@ -26,7 +26,7 @@ async fn is_should_do_that(mut db: DbConnection) {
 }
 
 #[tearup_test(AnotherContext)]
-fn is_should_do_that(address: Address) {
+fn is_should_do_this(address: Address) {
     // assert something using something_you_need_in_test
 }
 ```
