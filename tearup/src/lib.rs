@@ -68,6 +68,7 @@ mod syncc {
         }
     }
 
+    /// Trait to implement if you need to access a setup value in you test.
     pub trait FromContext<C: Context> {
         fn from_setup(context: &C) -> Self;
     }
