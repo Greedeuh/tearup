@@ -1,6 +1,6 @@
 [package]
 name = "tearup_macro"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 authors = ["Adrien Olivon <mail@markus-kohlhase.de>"]
@@ -23,6 +23,6 @@ proc-macro2 = "1.0.43"
 macrotest = "1.0"
 trybuild = "1.0"
 # For doc test
-tearup = "0.1"
+tearup = { path = '../tearup' }
 async-trait = "0.1.57"
 tokio = { version = "1.20.1", features = ["rt", "macros"] }

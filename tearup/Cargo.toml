@@ -1,6 +1,6 @@
 [package]
 name = "tearup"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 authors = ["Adrien Olivon <mail@markus-kohlhase.de>"]
@@ -12,7 +12,7 @@ keywords = ["test", "setup", "teardown"]
 categories = ["development-tools::testing"]
 
 [dependencies]
-tearup_macro = "0.1"
+tearup_macro = { path = '../tearup_macro' }
 trybuild = "1.0.64"
 macrotest = "1.0.9"
 async-trait = "0.1.57"
