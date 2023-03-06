@@ -73,10 +73,11 @@ mod asyncc {
         any::Any,
         panic::AssertUnwindSafe,
         sync::{Arc, Mutex},
+        time::Duration,
     };
     use tokio::time::sleep;
 
-    use crate::{ReadyChecksConfig, ReadyFn};
+    use crate::{PredicateFn, ReadyChecksConfig, ReadyFn};
 
     /// # Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
@@ -126,6 +127,13 @@ mod asyncc {
     #[async_trait]
     pub trait FromAsyncContext<'a, C: AsyncContext<'a>> {
         async fn from_context(context: &C) -> Self;
+    }
+
+    pub async fn ready_when(ready: ReadyFn, predicate: PredicateFn, waiting_duration: Duration) {
+        while !predicate() {
+            sleep(waiting_duration).await;
+        }
+        ready()
     }
 }
 

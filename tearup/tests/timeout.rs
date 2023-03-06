@@ -1,6 +1,12 @@
-use std::thread::spawn;
+use std::{
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+    thread::spawn,
+};
 
-use tearup::{tearup, Context, ReadyChecksConfig, ReadyFn};
+use tearup::{ready_when, tearup, Context, ReadyChecksConfig, ReadyFn};
 
 #[test]
 #[should_panic]
@@ -31,6 +37,37 @@ impl Context for TooSlowContext {
 
 #[tearup(TooSlowContext)]
 fn setup_barely_timeout() {}
+
+#[test]
+#[should_panic]
+fn it_barely_timeout_with_ready_when() {
+    setup_barely_timeout_with_ready_when()
+}
+
+struct TooSlowReadyWhenContext;
+impl Context for TooSlowReadyWhenContext {
+    fn ready_checks_config() -> ReadyChecksConfig {
+        ReadyChecksConfig::ms100()
+    }
+
+    fn setup(ready: ReadyFn) -> Self {
+        spawn(move || {
+            let config = Self::ready_checks_config();
+            let just_after_max = config.maximum + 1;
+
+            let count = Arc::new(AtomicUsize::new(1));
+            let predicate = move || count.fetch_add(1, Ordering::SeqCst) == just_after_max;
+
+            ready_when(ready, Box::new(predicate), config.duration);
+        });
+        Self {}
+    }
+
+    fn teardown(&mut self) {}
+}
+
+#[tearup(TooSlowReadyWhenContext)]
+fn setup_barely_timeout_with_ready_when() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
