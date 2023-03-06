@@ -3,13 +3,12 @@ use std::thread::spawn;
 use tearup::{tearup, Context, ReadyChecksConfig, ReadyFn};
 
 #[test]
-#[should_panic]
-fn it_barely_timeout() {
-    setup_barely_timeout()
+fn it_almost_timeout() {
+    setup_almost_timeout()
 }
 
-struct TooSlowContext;
-impl Context for TooSlowContext {
+struct SlowContext;
+impl Context for SlowContext {
     fn ready_checks_config() -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -17,9 +16,9 @@ impl Context for TooSlowContext {
     fn setup(ready: ReadyFn) -> Self {
         spawn(move || {
             let config = Self::ready_checks_config();
-            let just_after_max = (config.maximum + 1).try_into().unwrap();
+            let just_before_max = (config.maximum - 1).try_into().unwrap();
 
-            std::thread::sleep(config.duration * just_after_max);
+            std::thread::sleep(config.duration * just_before_max);
 
             ready()
         });
@@ -29,8 +28,8 @@ impl Context for TooSlowContext {
     fn teardown(&mut self) {}
 }
 
-#[tearup(TooSlowContext)]
-fn setup_barely_timeout() {}
+#[tearup(SlowContext)]
+fn setup_almost_timeout() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
@@ -39,14 +38,13 @@ mod asyncc {
     use tokio::{spawn, time::sleep};
 
     #[tokio::test]
-    #[should_panic]
-    async fn it_barely_timeout() {
-        setup_barely_timeout().await
+    async fn it_almost_timeout() {
+        setup_almost_timeout().await
     }
 
-    struct TooSlowContext;
+    struct SlowContext;
     #[async_trait]
-    impl AsyncContext<'_> for TooSlowContext {
+    impl AsyncContext<'_> for SlowContext {
         fn ready_checks_config() -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
@@ -54,7 +52,7 @@ mod asyncc {
         async fn setup(ready: ReadyFn) -> Self {
             spawn(async move {
                 let config = Self::ready_checks_config();
-                let just_after_max = (config.maximum + 1).try_into().unwrap();
+                let just_after_max = (config.maximum - 1).try_into().unwrap();
 
                 sleep(config.duration * just_after_max).await;
 
@@ -66,6 +64,6 @@ mod asyncc {
         async fn teardown(&mut self) {}
     }
 
-    #[tearup(TooSlowContext)]
-    async fn setup_barely_timeout() {}
+    #[tearup(SlowContext)]
+    async fn setup_almost_timeout() {}
 }

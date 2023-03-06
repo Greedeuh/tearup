@@ -1,24 +1,8 @@
 #[cfg(feature = "async")]
 pub use asyncc::*;
-use core::time;
+use core::time::Duration;
 pub use syncc::*;
 pub use tearup_macro::{tearup, tearup_test};
-
-pub type ReadyFn = Box<dyn Fn() + Send + Sync>;
-
-pub struct ReadyChecksConfig {
-    pub duration: time::Duration,
-    pub maximum: usize,
-}
-
-impl Default for ReadyChecksConfig {
-    fn default() -> Self {
-        Self {
-            duration: time::Duration::from_millis(100),
-            maximum: 50,
-        }
-    }
-}
 
 mod syncc {
     use std::{
@@ -42,7 +26,7 @@ mod syncc {
         /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
         /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
         fn ready_checks_config() -> ReadyChecksConfig {
-            ReadyChecksConfig::default()
+            ReadyChecksConfig::ms500()
         }
 
         fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
@@ -103,12 +87,12 @@ mod asyncc {
 
         /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
         /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
-        fn ready_checks_config(&self) -> ReadyChecksConfig {
-            ReadyChecksConfig::default()
+        fn ready_checks_config() -> ReadyChecksConfig {
+            ReadyChecksConfig::ms500()
         }
 
         async fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
-            let ready_checks = self.ready_checks_config();
+            let ready_checks = Self::ready_checks_config();
 
             let ready = || *ready.lock().unwrap();
 
@@ -137,5 +121,49 @@ mod asyncc {
     #[async_trait]
     pub trait FromAsyncContext<'a, C: AsyncContext<'a>> {
         async fn from_context(context: &C) -> Self;
+    }
+}
+
+pub type ReadyFn = Box<dyn Fn() + Send + Sync>;
+
+pub struct ReadyChecksConfig {
+    pub duration: Duration,
+    pub maximum: usize,
+}
+
+impl ReadyChecksConfig {
+    pub fn ms100() -> ReadyChecksConfig {
+        ReadyChecksConfig {
+            duration: Duration::from_millis(10),
+            maximum: 10,
+        }
+    }
+
+    pub fn ms500() -> ReadyChecksConfig {
+        ReadyChecksConfig {
+            duration: Duration::from_millis(50),
+            maximum: 10,
+        }
+    }
+
+    pub fn s1() -> ReadyChecksConfig {
+        ReadyChecksConfig {
+            duration: Duration::from_millis(100),
+            maximum: 10,
+        }
+    }
+
+    pub fn s2() -> ReadyChecksConfig {
+        ReadyChecksConfig {
+            duration: Duration::from_millis(200),
+            maximum: 10,
+        }
+    }
+
+    pub fn s5() -> ReadyChecksConfig {
+        ReadyChecksConfig {
+            duration: Duration::from_millis(500),
+            maximum: 10,
+        }
     }
 }
