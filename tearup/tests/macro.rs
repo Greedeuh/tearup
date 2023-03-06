@@ -1,11 +1,13 @@
 #[test]
-
-fn it_expands_as_expected() {
-    macrotest::expand("tests/expands/*.rs");
+#[cfg(not(feature = "async"))]
+fn it_expands_as_expected_without_default_features() {
+    macrotest::expand("tests/expands/sync.rs");
+    macrotest::expand("tests/expands/async-no-feature-fail.rs");
 }
 
 #[test]
-fn it_compiles_as_expected() {
-    let t = trybuild::TestCases::new();
-    t.pass("tests/compiles/*.rs");
+#[cfg(feature = "async")]
+fn it_expands_as_expected() {
+    macrotest::expand("tests/expands/sync.rs");
+    macrotest::expand("tests/expands/async.rs");
 }

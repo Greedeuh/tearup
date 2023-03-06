@@ -1,3 +1,4 @@
+#[cfg(feature = "async")]
 pub use asyncc::*;
 use core::time;
 pub use syncc::*;
@@ -74,6 +75,7 @@ mod syncc {
     }
 }
 
+#[cfg(feature = "async")]
 mod asyncc {
     use async_trait::async_trait;
     use futures::future::BoxFuture;

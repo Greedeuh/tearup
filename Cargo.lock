@@ -1422,7 +1422,6 @@ dependencies = [
  "macrotest",
  "tearup_macro",
  "tokio",
- "trybuild",
 ]
 
 [[package]]

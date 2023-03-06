@@ -26,7 +26,7 @@ impl FromContext<CContext> for DbName {
         context.db_name.clone()
     }
 }
-fn test_before() {
+fn test_with_db_setup_and_teardown() {
     let ready_flag = std::sync::Arc::new(std::sync::Mutex::new(false));
     let ready_flag_given = ready_flag.clone();
     let ready = Box::new(move || {

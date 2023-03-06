@@ -30,6 +30,6 @@ impl FromContext<CContext> for DbName {
 }
 
 #[tearup(CContext)]
-fn test_before(db_name: DbName) {
+fn test_with_db_setup_and_teardown(db_name: DbName) {
     if "db_name" == &db_name.0 {};
 }

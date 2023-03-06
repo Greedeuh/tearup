@@ -33,12 +33,9 @@ impl FromAsyncContext<'_, CContext> for DbName {
 }
 
 #[tearup(CContext)]
-async fn test_before(db_name: DbName) {
+async fn test_with_db_setup_and_teardown(db_name: DbName) {
     foo(&db_name).await;
 }
-
 async fn foo(db_name: &DbName) {
     if "db_name" == db_name.0 {};
 }
-
-fn main() {}
