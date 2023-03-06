@@ -7,8 +7,8 @@ pub use tearup_macro::{tearup, tearup_test};
 pub type ReadyFn = Box<dyn Fn() + Send + Sync>;
 
 pub struct ReadyChecksConfig {
-    duration: time::Duration,
-    maximum: usize,
+    pub duration: time::Duration,
+    pub maximum: usize,
 }
 
 impl Default for ReadyChecksConfig {
@@ -41,17 +41,17 @@ mod syncc {
 
         /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
         /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
-        fn ready_checks_config(&self) -> ReadyChecksConfig {
+        fn ready_checks_config() -> ReadyChecksConfig {
             ReadyChecksConfig::default()
         }
 
         fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
-            let ready_checks = self.ready_checks_config();
+            let ready_checks = Self::ready_checks_config();
 
             let ready = || *ready.lock().unwrap();
 
             let mut checks_done = 0;
-            while !ready() && checks_done < ready_checks.maximum {
+            while !ready() && checks_done <= ready_checks.maximum {
                 checks_done += 1;
                 if checks_done == ready_checks.maximum {
                     panic!("Setup has timeout, make sure to pass the 'ready: Arc<Mutex<bool>>' to true")
