@@ -60,7 +60,7 @@ fn define_arg(arg: &syn::PatType, context: &Ident) -> proc_macro2::TokenStream {
     let name = &arg.pat;
     let ty = &arg.ty;
     quote! {
-        let #name = <#ty as tearup::FromContext<#context>>::from_setup(&context);
+        let #name = <#ty as tearup::FromContext<#context>>::from_context(&context);
     }
     .to_token_stream()
 }

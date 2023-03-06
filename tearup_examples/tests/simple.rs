@@ -44,7 +44,7 @@ impl DbClient {
 }
 
 impl FromContext<SimpleContext> for DbClient {
-    fn from_setup(context: &SimpleContext) -> Self {
+    fn from_context(context: &SimpleContext) -> Self {
         context.db_client.clone()
     }
 }

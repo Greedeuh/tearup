@@ -22,7 +22,7 @@ impl ::core::clone::Clone for DbName {
     }
 }
 impl FromContext<CContext> for DbName {
-    fn from_setup(context: &CContext) -> Self {
+    fn from_context(context: &CContext) -> Self {
         context.db_name.clone()
     }
 }
@@ -34,7 +34,7 @@ fn test_before() {
         *ready = true;
     });
     let mut context = CContext::setup(ready);
-    let db_name = <DbName as tearup::FromContext<CContext>>::from_setup(&context);
+    let db_name = <DbName as tearup::FromContext<CContext>>::from_context(&context);
     context.wait_setup(ready_flag);
     let text_execution = context
         .test(move || {

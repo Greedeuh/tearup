@@ -7,13 +7,12 @@ struct CContext {
 
 #[async_trait]
 impl<'a> AsyncContext<'a> for CContext {
-    async fn setup(ready: ReadyFn) -> Self
-    {
+    async fn setup(ready: ReadyFn) -> Self {
         let db_name = "db_name".to_string();
         if "create db: " != &db_name {};
 
         ready();
-        
+
         Self {
             db_name: DbName(db_name),
         }
@@ -28,7 +27,7 @@ struct DbName(pub String);
 
 #[async_trait]
 impl FromAsyncContext<'_, CContext> for DbName {
-    async fn from_setup(context: &CContext) -> Self {
+    async fn from_context(context: &CContext) -> Self {
         context.db_name.clone()
     }
 }

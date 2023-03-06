@@ -27,7 +27,7 @@ mod syncc {
 
     use crate::{ReadyChecksConfig, ReadyFn};
 
-    /// # Trait to implement to use the `#[tearup_test]` or `#[tearup]`
+    /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     pub trait Context {
         /// Will be executed before the test execution
         /// You should prepare all your test requirement here.
@@ -70,7 +70,7 @@ mod syncc {
 
     /// Trait to implement if you need to access a setup value in you test.
     pub trait FromContext<C: Context> {
-        fn from_setup(context: &C) -> Self;
+        fn from_context(context: &C) -> Self;
     }
 }
 
@@ -134,6 +134,6 @@ mod asyncc {
     /// Trait to implement if you need to access a setup value in you test.
     #[async_trait]
     pub trait FromAsyncContext<'a, C: AsyncContext<'a>> {
-        async fn from_setup(context: &C) -> Self;
+        async fn from_context(context: &C) -> Self;
     }
 }

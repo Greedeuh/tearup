@@ -65,7 +65,7 @@ struct BaseUrl(pub String);
 
 #[async_trait]
 impl FromAsyncContext<'_, RocketContext> for BaseUrl {
-    async fn from_setup(context: &RocketContext) -> Self {
+    async fn from_context(context: &RocketContext) -> Self {
         Self(format!("http://localhost:{}/", context.port))
     }
 }

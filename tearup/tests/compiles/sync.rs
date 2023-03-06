@@ -24,7 +24,7 @@ impl Context for CContext {
 struct DbName(pub String);
 
 impl FromContext<CContext> for DbName {
-    fn from_setup(context: &CContext) -> Self {
+    fn from_context(context: &CContext) -> Self {
         context.db_name.clone()
     }
 }

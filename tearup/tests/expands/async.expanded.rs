@@ -25,7 +25,7 @@ impl ::core::clone::Clone for DbName {
 }
 #[async_trait]
 impl FromAsyncContext<'_, CContext> for DbName {
-    async fn from_setup(context: &CContext) -> Self {
+    async fn from_context(context: &CContext) -> Self {
         context.db_name.clone()
     }
 }
@@ -39,7 +39,7 @@ async fn test_before() {
     });
     let mut context = CContext::setup(ready).await;
     context.wait_setup(ready_flag).await;
-    let db_name = <DbName as tearup::FromAsyncContext<CContext>>::from_setup(&context)
+    let db_name = <DbName as tearup::FromAsyncContext<CContext>>::from_context(&context)
         .await;
     let text_execution = context
         .test(move || {

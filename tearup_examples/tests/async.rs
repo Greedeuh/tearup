@@ -50,7 +50,7 @@ impl DbClient {
 
 #[async_trait]
 impl FromAsyncContext<'_, SimpleContext> for DbClient {
-    async fn from_setup(context: &SimpleContext) -> Self {
+    async fn from_context(context: &SimpleContext) -> Self {
         context.db_client.clone()
     }
 }

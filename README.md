@@ -62,7 +62,7 @@ impl<'a> AsyncContext<'a> for YourContext {
 pub struct SomethingYouSetup;
 #[async_trait]
 impl FromAsyncContext<'_, YourContext> for SomethingYouSetup {
-    async fn from_setup(context: &YourContext) -> Self {
+    async fn from_context(context: &YourContext) -> Self {
         context.something_you_need_in_test.clone()
     }
 }
