@@ -121,9 +121,6 @@ mod asyncc {
                 .catch_unwind()
                 .await
         }
-
-        // pub type PredicateFn<'a> = Box<dyn Fn() -> BoxFuture<'a, bool> + Send + Sync + 'static>;
-        // pub type A = Box<dyn Fn() -> BoxFuture<'a, bool> + Send + Sync + 'static>;
     }
 
     /// Trait to implement if you need to access a setup value in you test.
