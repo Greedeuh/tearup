@@ -50,6 +50,59 @@ pub trait Context {
     }
 }
 
+trait ContextCombinator<Context1: Context, Context2: Context>: Context + Sized {
+    fn new(context1: Context1, context2: Context2) -> Self;
+    fn context1(&self) -> Context1;
+    fn context2(&self) -> Context1;
+
+    /// Will be executed before the test execution
+    /// You should prepare all your test requirement here.
+    /// Use the `ready` to notify that the test can start
+    fn setup(both_ready: ReadyFn) -> Self {
+        let both_ready = Arc::new(both_ready);
+
+        let ready_flag1 = Arc::new(std::sync::Mutex::new(false));
+        let ready_flag2 = Arc::new(std::sync::Mutex::new(false));
+
+        let context1 = {
+            let ready_flag1 = ready_flag1.clone();
+            let ready_flag2 = ready_flag2.clone();
+            let both_ready = both_ready.clone();
+
+            let ready1 = Box::new(move || {
+                let mut ready1 = ready_flag1.lock().unwrap();
+                let ready2 = ready_flag2.lock().unwrap();
+                *ready1 = true;
+                if *ready2 {
+                    both_ready();
+                }
+            });
+
+            Context1::setup(ready1)
+        };
+
+        let ready2 = Box::new(move || {
+            let ready1 = ready_flag1.lock().unwrap();
+            let mut ready2 = ready_flag2.lock().unwrap();
+            *ready2 = true;
+            if *ready1 {
+                both_ready();
+            }
+        });
+
+        let context2 = Context2::setup(ready2);
+
+        Self::new(context1, context2)
+    }
+
+    /// Will be executed before the test execution even if the test has panicked
+    /// You should do your clean up here.
+    fn teardown(&mut self) {
+        self.context1().teardown();
+        self.context2().teardown();
+    }
+}
+
 /// Trait to implement if you need to access a setup value in you test.
 pub trait FromContext<C: Context> {
     fn from_context(context: &C) -> Self;
