@@ -147,6 +147,6 @@ mod asyncc {
         async fn teardown(&mut self) {}
     }
 
-    #[tearup(TooSlowContext)]
+    #[tearup(TooSlowReadyWhenContext)]
     async fn setup_barely_timeout_with_ready_when() {}
 }
