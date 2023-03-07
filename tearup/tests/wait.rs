@@ -8,19 +8,20 @@ fn it_almost_timeout() {
 
 struct SlowContext;
 impl Context for SlowContext {
-    fn ready_checks_config() -> ReadyChecksConfig {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
 
     fn setup(ready: ReadyFn) -> Self {
         spawn(move || {
-            let config = Self::ready_checks_config();
+            let config = Self {}.ready_checks_config();
             let just_before_max = (config.maximum - 1).try_into().unwrap();
 
             std::thread::sleep(config.duration * just_before_max);
 
             ready()
         });
+
         Self {}
     }
 
@@ -44,13 +45,13 @@ mod asyncc {
     struct SlowContext;
     #[async_trait]
     impl AsyncContext<'_> for SlowContext {
-        fn ready_checks_config() -> ReadyChecksConfig {
+        fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
 
         async fn setup(ready: ReadyFn) -> Self {
             spawn(async move {
-                let config = Self::ready_checks_config();
+                let config = Self {}.ready_checks_config();
                 let just_after_max = (config.maximum - 1).try_into().unwrap();
 
                 sleep(config.duration * just_after_max).await;

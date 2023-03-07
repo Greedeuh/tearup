@@ -8,7 +8,7 @@ fn it_pass_through_teardown() {
 
 struct TeardownPanicContext;
 impl Context for TeardownPanicContext {
-    fn ready_checks_config() -> ReadyChecksConfig {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
 
@@ -39,7 +39,7 @@ mod asyncc {
     struct TeardownPanicContext;
     #[async_trait]
     impl AsyncContext<'_> for TeardownPanicContext {
-        fn ready_checks_config() -> ReadyChecksConfig {
+        fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
 

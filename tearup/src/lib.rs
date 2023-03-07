@@ -22,12 +22,12 @@ pub trait Context {
 
     /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
     /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
-    fn ready_checks_config() -> ReadyChecksConfig {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms500()
     }
 
     fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
-        let ready_checks = Self::ready_checks_config();
+        let ready_checks = self.ready_checks_config();
 
         let ready = || *ready.lock().unwrap();
 
@@ -151,12 +151,12 @@ mod asyncc {
 
         /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
         /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
-        fn ready_checks_config() -> ReadyChecksConfig {
+        fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms500()
         }
 
         async fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
-            let ready_checks = Self::ready_checks_config();
+            let ready_checks = self.ready_checks_config();
 
             let ready = || *ready.lock().unwrap();
 

@@ -15,13 +15,13 @@ fn it_barely_timeout_with_ready_when() {
 
 struct TooSlowReadyWhenContext;
 impl Context for TooSlowReadyWhenContext {
-    fn ready_checks_config() -> ReadyChecksConfig {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
 
     fn setup(ready: ReadyFn) -> Self {
         spawn(move || {
-            let config = Self::ready_checks_config();
+            let config = Self {}.ready_checks_config();
             let just_after_max = config.maximum + 1;
 
             let count = Arc::new(AtomicUsize::new(1));
@@ -57,13 +57,13 @@ mod asyncc {
     struct TooSlowReadyWhenContext;
     #[async_trait]
     impl AsyncContext<'_> for TooSlowReadyWhenContext {
-        fn ready_checks_config() -> ReadyChecksConfig {
+        fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
 
         async fn setup(ready: ReadyFn) -> Self {
             spawn(async move {
-                let config = Self::ready_checks_config();
+                let config = Self {}.ready_checks_config();
                 let just_after_max = config.maximum + 1;
 
                 let count = Arc::new(AtomicUsize::new(1));
