@@ -55,6 +55,10 @@ pub trait FromContext<C: Context> {
     fn from_context(context: &C) -> Self;
 }
 
+/// Periadically try the predicate waiting for the given duration.
+/// When the predicate return `true` call the `ready` fn.
+///
+/// Useful when you can't trigger a ready from your dependencies.
 pub fn ready_when(ready: ReadyFn, predicate: PredicateFn, waiting_duration: Duration) {
     while !predicate() {
         sleep(waiting_duration)
@@ -129,6 +133,10 @@ mod asyncc {
         async fn from_context(context: &C) -> Self;
     }
 
+    /// Periadically try the predicate waiting for the given duration.
+    /// When the predicate return `true` call the `ready` fn.
+    ///
+    /// Useful when you can't trigger a ready from your dependencies.
     pub async fn async_ready_when<'a, PredicateFn>(
         ready: ReadyFn,
         mut predicate: PredicateFn,
