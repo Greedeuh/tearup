@@ -77,7 +77,7 @@ mod asyncc {
     };
     use tokio::time::sleep;
 
-    use crate::{PredicateFn, ReadyChecksConfig, ReadyFn};
+    use crate::{ReadyChecksConfig, ReadyFn};
 
     /// # Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
@@ -121,6 +121,9 @@ mod asyncc {
                 .catch_unwind()
                 .await
         }
+
+        // pub type PredicateFn<'a> = Box<dyn Fn() -> BoxFuture<'a, bool> + Send + Sync + 'static>;
+        // pub type A = Box<dyn Fn() -> BoxFuture<'a, bool> + Send + Sync + 'static>;
     }
 
     /// Trait to implement if you need to access a setup value in you test.
@@ -129,8 +132,14 @@ mod asyncc {
         async fn from_context(context: &C) -> Self;
     }
 
-    pub async fn ready_when(ready: ReadyFn, predicate: PredicateFn, waiting_duration: Duration) {
-        while !predicate() {
+    pub async fn async_ready_when<'a, PredicateFn>(
+        ready: ReadyFn,
+        mut predicate: PredicateFn,
+        waiting_duration: Duration,
+    ) where
+        PredicateFn: FnMut() -> BoxFuture<'a, bool> + Send,
+    {
+        while !predicate().await {
             sleep(waiting_duration).await;
         }
         ready()

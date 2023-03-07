@@ -69,8 +69,13 @@ fn setup_almost_timeout_with_ready_when() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
+
     use async_trait::async_trait;
-    use tearup::{tearup, AsyncContext, ReadyChecksConfig, ReadyFn};
+    use tearup::{async_ready_when, tearup, AsyncContext, FutureExt, ReadyChecksConfig, ReadyFn};
     use tokio::{spawn, time::sleep};
 
     #[tokio::test]
@@ -102,4 +107,43 @@ mod asyncc {
 
     #[tearup(SlowContext)]
     async fn setup_almost_timeout() {}
+
+    #[tokio::test]
+    #[should_panic]
+    async fn it_almost_timeout_with_ready_when() {
+        setup_almost_timeout_with_ready_when().await
+    }
+
+    struct SlowReadyWhenContext;
+    #[async_trait]
+    impl AsyncContext<'_> for SlowReadyWhenContext {
+        fn ready_checks_config() -> ReadyChecksConfig {
+            ReadyChecksConfig::ms100()
+        }
+
+        async fn setup(ready: ReadyFn) -> Self {
+            spawn(async move {
+                let config = Self::ready_checks_config();
+                let just_after_max = config.maximum + 1;
+
+                let count = Arc::new(AtomicUsize::new(1));
+
+                let predicate = {
+                    move || {
+                        let count = Arc::clone(&count);
+                        async move { count.fetch_add(1, Ordering::SeqCst) == just_after_max }
+                            .boxed()
+                    }
+                };
+
+                async_ready_when(ready, predicate, config.duration).await;
+            });
+            Self {}
+        }
+
+        async fn teardown(&mut self) {}
+    }
+
+    #[tearup(SlowReadyWhenContext)]
+    async fn setup_almost_timeout_with_ready_when() {}
 }
