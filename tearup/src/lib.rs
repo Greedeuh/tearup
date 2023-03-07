@@ -96,6 +96,20 @@ impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context
         Self { context1, context2 }
     }
 
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
+        let config1 = self.context1.ready_checks_config();
+        let duration1 = config1.duration * config1.maximum.try_into().unwrap();
+
+        let config2 = self.context2.ready_checks_config();
+        let duration2 = config1.duration * config2.maximum.try_into().unwrap();
+
+        if duration1 > duration2 {
+            config1
+        } else {
+            config2
+        }
+    }
+
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
     fn teardown(&mut self) {
