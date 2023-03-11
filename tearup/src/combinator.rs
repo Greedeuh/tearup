@@ -1,36 +1,8 @@
 pub use tearup_macro::{tearup, tearup_test};
 
-use crate::{get_longest, split, Context, ReadyChecksConfig, ReadyFn};
+use crate::{get_longest, n_times, split, Context, ReadyChecksConfig, ReadyFn, SplitedReadyFn};
 #[cfg(feature = "async")]
 pub use asyncc::*;
-
-pub struct ContextCombinator<Context1: Context, Context2: Context> {
-    context1: Context1,
-    context2: Context2,
-}
-
-impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context1, Context2> {
-    fn setup(both_ready: ReadyFn) -> Self {
-        let (ready1, ready2) = split(both_ready);
-
-        let context1 = Context1::setup(ready1);
-        let context2 = Context2::setup(ready2);
-
-        Self { context1, context2 }
-    }
-
-    fn teardown(&mut self) {
-        self.context1.teardown();
-        self.context2.teardown();
-    }
-
-    fn ready_checks_config(&self) -> ReadyChecksConfig {
-        get_longest(
-            self.context1.ready_checks_config(),
-            self.context2.ready_checks_config(),
-        )
-    }
-}
 
 #[cfg(feature = "async")]
 mod asyncc {
@@ -78,5 +50,38 @@ mod asyncc {
                 self.context2.ready_checks_config(),
             )
         }
+    }
+}
+
+pub trait ContextCombinator {
+    fn contexts(&self) -> &Vec<Box<dyn Context>>;
+    fn contexts_mut(&mut self) -> &mut Vec<Box<dyn Context>>;
+    fn setup_all(splited_ready: SplitedReadyFn) -> Self;
+    fn size() -> u16;
+}
+
+impl<Combinator: ContextCombinator> Context for Combinator {
+    fn setup(all_ready: ReadyFn) -> Self
+    where
+        Self: Sized,
+    {
+        let splited_ready = n_times(all_ready, Self::size());
+        Self::setup_all(splited_ready)
+    }
+
+    fn teardown(&mut self) {
+        self.contexts_mut()
+            .iter_mut()
+            .for_each(|context| context.teardown());
+    }
+
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
+        let configs = self
+            .contexts()
+            .iter()
+            .map(|c| c.ready_checks_config())
+            .collect();
+
+        ReadyChecksConfig::get_longest(configs)
     }
 }

@@ -47,6 +47,15 @@ impl ReadyChecksConfig {
             maximum: 10,
         }
     }
+
+    pub fn get_longest(mut list: Vec<Self>) -> Self {
+        list.sort_by_key(|a| a.maxium_duration());
+        list.remove(0)
+    }
+
+    pub fn maxium_duration(&self) -> Duration {
+        self.duration * self.maximum.try_into().unwrap()
+    }
 }
 
 /// Periadically try the predicate waiting for the given duration.
@@ -90,6 +99,22 @@ pub fn split(both_ready: ReadyFn) -> (ReadyFn, ReadyFn) {
         }
     });
     (ready1, ready2)
+}
+
+pub type SplitedReadyFn = Box<dyn Fn(u16) + Send + Sync>;
+
+pub fn n_times(all_ready: ReadyFn, n: u16) -> SplitedReadyFn {
+    let all_ready = Arc::new(all_ready);
+    let ready_flags = Arc::new(std::sync::Mutex::new(vec![false; n.into()]));
+
+    Box::new(move |who_index| {
+        let mut ready_flags = ready_flags.lock().unwrap();
+        ready_flags[who_index as usize] = true;
+
+        if ready_flags.iter().all(|x| *x) {
+            all_ready()
+        }
+    })
 }
 
 pub fn get_longest(config1: ReadyChecksConfig, config2: ReadyChecksConfig) -> ReadyChecksConfig {

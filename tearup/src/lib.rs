@@ -17,7 +17,9 @@ pub trait Context {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
-    fn setup(ready: ReadyFn) -> Self;
+    fn setup(ready: ReadyFn) -> Self
+    where
+        Self: Sized;
 
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
@@ -48,6 +50,7 @@ pub trait Context {
     fn test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
     where
         TestFn: FnOnce(),
+        Self: Sized,
     {
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(test))
     }

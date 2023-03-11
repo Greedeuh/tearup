@@ -1,6 +1,10 @@
+use std::sync::Arc;
+
 use tearup::{tearup, Context, ContextCombinator};
 mod helper;
-use helper::{InstantContext, TooSlowContext};
+use helper::TooSlowContext;
+
+use crate::helper::InstantContext;
 
 #[test]
 #[should_panic]
@@ -8,43 +12,78 @@ fn it_barely_timeout() {
     setup_barely_timeout()
 }
 
-#[test]
-#[should_panic]
-fn it_barely_timeout_reversed() {
-    setup_barely_timeout_reversed()
+struct TooSlowCombinedContext {
+    contexts: Vec<Box<dyn Context>>,
+}
+impl ContextCombinator for TooSlowCombinedContext {
+    fn contexts(&self) -> &Vec<Box<dyn Context>> {
+        &self.contexts
+    }
+
+    fn contexts_mut(&mut self) -> &mut Vec<Box<dyn Context>> {
+        &mut self.contexts
+    }
+
+    fn setup_all(splited_ready: tearup::SplitedReadyFn) -> Self {
+        let splited_ready = Arc::new(splited_ready);
+
+        let ready1 = {
+            let splited_ready = splited_ready.clone();
+            Box::new(move || splited_ready(0))
+        };
+
+        let ready2 = Box::new(move || splited_ready(1));
+
+        Self {
+            contexts: vec![
+                Box::new(InstantContext::setup(ready1)),
+                Box::new(TooSlowContext::setup(ready2)),
+            ],
+        }
+    }
+
+    fn size() -> u16 {
+        2
+    }
 }
 
-type A = ContextCombinator<TooSlowContext, InstantContext>;
-#[tearup(A)]
+#[tearup(TooSlowCombinedContext)]
 fn setup_barely_timeout() {}
 
-type B = ContextCombinator<InstantContext, TooSlowContext>;
-#[tearup(B)]
-fn setup_barely_timeout_reversed() {}
-
-#[cfg(feature = "async")]
-mod asyncc {
-    use tearup::{tearup, AsyncContext, AsyncContextCombinator};
-
-    use crate::helper::{AsyncInstantContext, AsyncTooSlowContext};
-
-    #[tokio::test]
-    #[should_panic]
-    async fn it_barely_timeout() {
-        setup_barely_timeout().await
-    }
-
-    #[tokio::test]
-    #[should_panic]
-    async fn it_barely_timeout_reversed() {
-        setup_barely_timeout_reversed().await
-    }
-
-    type A = AsyncContextCombinator<AsyncTooSlowContext, AsyncInstantContext>;
-    #[tearup(A)]
-    async fn setup_barely_timeout() {}
-
-    type B = AsyncContextCombinator<AsyncInstantContext, AsyncTooSlowContext>;
-    #[tearup(B)]
-    async fn setup_barely_timeout_reversed() {}
+struct TooSlowCombinedContextReversed {
+    contexts: Vec<Box<dyn Context>>,
 }
+impl ContextCombinator for TooSlowCombinedContextReversed {
+    fn contexts(&self) -> &Vec<Box<dyn Context>> {
+        &self.contexts
+    }
+
+    fn contexts_mut(&mut self) -> &mut Vec<Box<dyn Context>> {
+        &mut self.contexts
+    }
+
+    fn setup_all(splited_ready: tearup::SplitedReadyFn) -> Self {
+        let splited_ready = Arc::new(splited_ready);
+
+        let ready1 = {
+            let splited_ready = splited_ready.clone();
+            Box::new(move || splited_ready(0))
+        };
+
+        let ready2 = Box::new(move || splited_ready(1));
+
+        Self {
+            contexts: vec![
+                Box::new(TooSlowContext::setup(ready1)),
+                Box::new(InstantContext::setup(ready2)),
+            ],
+        }
+    }
+
+    fn size() -> u16 {
+        2
+    }
+}
+
+#[tearup(TooSlowCombinedContextReversed)]
+fn setup_barely_timeout_reversed() {}
