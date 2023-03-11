@@ -75,13 +75,15 @@ mod asyncc {
 
     use crate::{ReadyChecksConfig, ReadyFn};
 
-    /// # Trait to implement to use the `#[tearup_test]` or `#[tearup]`
+    /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
-    pub trait AsyncContext<'a>: Sync {
+    pub trait AsyncContext<'a>: Sync + Send {
         /// Will be executed before the test execution
         /// You should prepare all your test requirement here.
         /// Use the `ready` to notify that the test can start
-        async fn setup(ready: ReadyFn) -> Self;
+        async fn setup(ready: ReadyFn) -> Self
+        where
+            Self: Sized;
 
         /// Will be executed before the test execution even if the test has panicked
         /// You should do your clean up here.
@@ -112,6 +114,7 @@ mod asyncc {
         async fn test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
         where
             TestFn: FnOnce() -> BoxFuture<'a, ()> + Send,
+            Self: Sized,
         {
             AssertUnwindSafe(async move { test().await })
                 .catch_unwind()
