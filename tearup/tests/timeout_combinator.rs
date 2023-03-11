@@ -23,4 +23,28 @@ type B = ContextCombinator<InstantContext, TooSlowContext>;
 fn setup_barely_timeout_reversed() {}
 
 #[cfg(feature = "async")]
-mod asyncc {}
+mod asyncc {
+    use tearup::{tearup, AsyncContext, AsyncContextCombinator};
+
+    use crate::helper::{AsyncInstantContext, AsyncTooSlowContext};
+
+    #[tokio::test]
+    #[should_panic]
+    async fn it_barely_timeout() {
+        setup_barely_timeout().await
+    }
+
+    #[tokio::test]
+    #[should_panic]
+    async fn it_barely_timeout_reversed() {
+        setup_barely_timeout_reversed().await
+    }
+
+    type A = AsyncContextCombinator<AsyncTooSlowContext, AsyncInstantContext>;
+    #[tearup(A)]
+    async fn setup_barely_timeout() {}
+
+    type B = AsyncContextCombinator<AsyncInstantContext, AsyncTooSlowContext>;
+    #[tearup(B)]
+    async fn setup_barely_timeout_reversed() {}
+}
