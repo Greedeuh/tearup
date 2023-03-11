@@ -3,6 +3,8 @@ pub use asyncc::*;
 use core::time::Duration;
 pub use tearup_macro::{tearup, tearup_test};
 
+mod combinator;
+pub use combinator::*;
 use std::{
     any::Any,
     sync::{Arc, Mutex},
@@ -47,74 +49,6 @@ pub trait Context {
         TestFn: FnOnce(),
     {
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(test))
-    }
-}
-
-pub struct ContextCombinator<Context1: Context, Context2: Context> {
-    context1: Context1,
-    context2: Context2,
-}
-
-impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context1, Context2> {
-    /// Will be executed before the test execution
-    /// You should prepare all your test requirement here.
-    /// Use the `ready` to notify that the test can start
-    fn setup(both_ready: ReadyFn) -> Self {
-        let both_ready = Arc::new(both_ready);
-
-        let ready_flag1 = Arc::new(std::sync::Mutex::new(false));
-        let ready_flag2 = Arc::new(std::sync::Mutex::new(false));
-
-        let context1 = {
-            let ready_flag1 = ready_flag1.clone();
-            let ready_flag2 = ready_flag2.clone();
-            let both_ready = both_ready.clone();
-
-            let ready1 = Box::new(move || {
-                let mut ready1 = ready_flag1.lock().unwrap();
-                let ready2 = ready_flag2.lock().unwrap();
-                *ready1 = true;
-                if *ready2 {
-                    both_ready();
-                }
-            });
-
-            Context1::setup(ready1)
-        };
-
-        let ready2 = Box::new(move || {
-            let ready1 = ready_flag1.lock().unwrap();
-            let mut ready2 = ready_flag2.lock().unwrap();
-            *ready2 = true;
-            if *ready1 {
-                both_ready();
-            }
-        });
-
-        let context2 = Context2::setup(ready2);
-
-        Self { context1, context2 }
-    }
-
-    fn ready_checks_config(&self) -> ReadyChecksConfig {
-        let config1 = self.context1.ready_checks_config();
-        let duration1 = config1.duration * config1.maximum.try_into().unwrap();
-
-        let config2 = self.context2.ready_checks_config();
-        let duration2 = config1.duration * config2.maximum.try_into().unwrap();
-
-        if duration1 > duration2 {
-            config1
-        } else {
-            config2
-        }
-    }
-
-    /// Will be executed before the test execution even if the test has panicked
-    /// You should do your clean up here.
-    fn teardown(&mut self) {
-        self.context1.teardown();
-        self.context2.teardown();
     }
 }
 
@@ -192,83 +126,6 @@ mod asyncc {
             AssertUnwindSafe(async move { test().await })
                 .catch_unwind()
                 .await
-        }
-    }
-
-    pub struct AsyncContextCombinator<Context1, Context2>
-    where
-        for<'a> Context1: AsyncContext<'a> + Send,
-        for<'a> Context2: AsyncContext<'a> + Send,
-    {
-        context1: Context1,
-        context2: Context2,
-    }
-
-    #[async_trait]
-    impl<'b, Context1, Context2> AsyncContext<'b> for AsyncContextCombinator<Context1, Context2>
-    where
-        for<'a> Context1: AsyncContext<'a> + Send,
-        for<'a> Context2: AsyncContext<'a> + Send,
-    {
-        /// Will be executed before the test execution
-        /// You should prepare all your test requirement here.
-        /// Use the `ready` to notify that the test can start
-        async fn setup(both_ready: ReadyFn) -> Self {
-            let both_ready = Arc::new(both_ready);
-
-            let ready_flag1 = Arc::new(std::sync::Mutex::new(false));
-            let ready_flag2 = Arc::new(std::sync::Mutex::new(false));
-
-            let context1 = {
-                let ready_flag1 = ready_flag1.clone();
-                let ready_flag2 = ready_flag2.clone();
-                let both_ready = both_ready.clone();
-
-                let ready1 = Box::new(move || {
-                    let mut ready1 = ready_flag1.lock().unwrap();
-                    let ready2 = ready_flag2.lock().unwrap();
-                    *ready1 = true;
-                    if *ready2 {
-                        both_ready();
-                    }
-                });
-
-                Context1::setup(ready1).await
-            };
-
-            let ready2 = Box::new(move || {
-                let ready1 = ready_flag1.lock().unwrap();
-                let mut ready2 = ready_flag2.lock().unwrap();
-                *ready2 = true;
-                if *ready1 {
-                    both_ready();
-                }
-            });
-
-            let context2 = Context2::setup(ready2).await;
-
-            Self { context1, context2 }
-        }
-
-        fn ready_checks_config(&self) -> ReadyChecksConfig {
-            let config1 = self.context1.ready_checks_config();
-            let duration1 = config1.duration * config1.maximum.try_into().unwrap();
-
-            let config2 = self.context2.ready_checks_config();
-            let duration2 = config1.duration * config2.maximum.try_into().unwrap();
-
-            if duration1 > duration2 {
-                config1
-            } else {
-                config2
-            }
-        }
-
-        /// Will be executed before the test execution even if the test has panicked
-        /// You should do your clean up here.
-        async fn teardown(&mut self) {
-            self.context1.teardown().await;
-            self.context2.teardown().await;
         }
     }
 
