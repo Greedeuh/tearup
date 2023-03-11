@@ -1,6 +1,5 @@
 #[cfg(feature = "async")]
 pub use asyncc::*;
-use core::time::Duration;
 pub use tearup_macro::{tearup, tearup_test};
 
 mod combinator;
@@ -58,8 +57,6 @@ pub trait Context {
 pub trait FromContext<C: Context> {
     fn from_context(context: &C) -> Self;
 }
-
-pub type PredicateFn = Box<dyn Fn() -> bool + Send + Sync>;
 
 #[cfg(feature = "async")]
 mod asyncc {
@@ -123,49 +120,5 @@ mod asyncc {
     #[async_trait]
     pub trait FromAsyncContext<'a, C: AsyncContext<'a>> {
         async fn from_context(context: &C) -> Self;
-    }
-}
-
-pub type ReadyFn = Box<dyn Fn() + Send + Sync>;
-
-pub struct ReadyChecksConfig {
-    pub duration: Duration,
-    pub maximum: usize,
-}
-
-impl ReadyChecksConfig {
-    pub fn ms100() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(10),
-            maximum: 10,
-        }
-    }
-
-    pub fn ms500() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(50),
-            maximum: 10,
-        }
-    }
-
-    pub fn s1() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(100),
-            maximum: 10,
-        }
-    }
-
-    pub fn s2() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(200),
-            maximum: 10,
-        }
-    }
-
-    pub fn s5() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(500),
-            maximum: 10,
-        }
     }
 }

@@ -1,7 +1,6 @@
-use std::sync::Arc;
 pub use tearup_macro::{tearup, tearup_test};
 
-use crate::{Context, ReadyChecksConfig, ReadyFn};
+use crate::{get_longest, split, Context, ReadyChecksConfig, ReadyFn};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
@@ -79,49 +78,5 @@ mod asyncc {
                 self.context2.ready_checks_config(),
             )
         }
-    }
-}
-
-fn split(both_ready: ReadyFn) -> (ReadyFn, ReadyFn) {
-    let both_ready = Arc::new(both_ready);
-
-    let ready_flag1 = Arc::new(std::sync::Mutex::new(false));
-    let ready_flag2 = Arc::new(std::sync::Mutex::new(false));
-
-    let ready1 = {
-        let ready_flag1 = ready_flag1.clone();
-        let ready_flag2 = ready_flag2.clone();
-        let both_ready = both_ready.clone();
-
-        Box::new(move || {
-            let mut ready1 = ready_flag1.lock().unwrap();
-            let ready2 = ready_flag2.lock().unwrap();
-            *ready1 = true;
-            if *ready2 {
-                both_ready();
-            }
-        })
-    };
-
-    let ready2 = Box::new(move || {
-        let ready1 = ready_flag1.lock().unwrap();
-        let mut ready2 = ready_flag2.lock().unwrap();
-        *ready2 = true;
-        if *ready1 {
-            both_ready();
-        }
-    });
-    (ready1, ready2)
-}
-
-fn get_longest(config1: ReadyChecksConfig, config2: ReadyChecksConfig) -> ReadyChecksConfig {
-    let duration1 = config1.duration * config1.maximum.try_into().unwrap();
-
-    let duration2 = config1.duration * config2.maximum.try_into().unwrap();
-
-    if duration1 > duration2 {
-        config1
-    } else {
-        config2
     }
 }
