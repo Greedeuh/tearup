@@ -11,9 +11,6 @@ pub struct ContextCombinator<Context1: Context, Context2: Context> {
 }
 
 impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context1, Context2> {
-    /// Will be executed before the test execution
-    /// You should prepare all your test requirement here.
-    /// Use the `ready` to notify that the test can start
     fn setup(both_ready: ReadyFn) -> Self {
         let (ready1, ready2) = split(both_ready);
 
@@ -23,8 +20,6 @@ impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context
         Self { context1, context2 }
     }
 
-    /// Will be executed before the test execution even if the test has panicked
-    /// You should do your clean up here.
     fn teardown(&mut self) {
         self.context1.teardown();
         self.context2.teardown();

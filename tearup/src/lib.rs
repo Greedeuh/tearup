@@ -5,6 +5,8 @@ pub use tearup_macro::{tearup, tearup_test};
 
 mod combinator;
 pub use combinator::*;
+mod ready;
+pub use ready::*;
 use std::{
     any::Any,
     sync::{Arc, Mutex},
@@ -57,17 +59,6 @@ pub trait FromContext<C: Context> {
     fn from_context(context: &C) -> Self;
 }
 
-/// Periadically try the predicate waiting for the given duration.
-/// When the predicate return `true` call the `ready` fn.
-///
-/// Useful when you can't trigger a ready from your dependencies.
-pub fn ready_when(ready: ReadyFn, predicate: PredicateFn, waiting_duration: Duration) {
-    while !predicate() {
-        sleep(waiting_duration)
-    }
-    ready()
-}
-
 pub type PredicateFn = Box<dyn Fn() -> bool + Send + Sync>;
 
 #[cfg(feature = "async")]
@@ -79,7 +70,6 @@ mod asyncc {
         any::Any,
         panic::AssertUnwindSafe,
         sync::{Arc, Mutex},
-        time::Duration,
     };
     use tokio::time::sleep;
 
@@ -133,23 +123,6 @@ mod asyncc {
     #[async_trait]
     pub trait FromAsyncContext<'a, C: AsyncContext<'a>> {
         async fn from_context(context: &C) -> Self;
-    }
-
-    /// Periadically try the predicate waiting for the given duration.
-    /// When the predicate return `true` call the `ready` fn.
-    ///
-    /// Useful when you can't trigger a ready from your dependencies.
-    pub async fn async_ready_when<'a, PredicateFn>(
-        ready: ReadyFn,
-        mut predicate: PredicateFn,
-        waiting_duration: Duration,
-    ) where
-        PredicateFn: FnMut() -> BoxFuture<'a, bool> + Send,
-    {
-        while !predicate().await {
-            sleep(waiting_duration).await;
-        }
-        ready()
     }
 }
 
