@@ -1,81 +1,93 @@
+use std::sync::Arc;
 pub use tearup_macro::{tearup, tearup_test};
 
-use crate::{n_times, Context, ReadyChecksConfig, ReadyFn, SplitedReadyFn};
+use crate::{n_times, Context, ReadyChecksConfig, ReadyFn};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
-pub trait ContextCombinator {
-    fn contexts(&self) -> &Vec<Box<dyn Context>>;
-    fn contexts_mut(&mut self) -> &mut Vec<Box<dyn Context>>;
-    fn setup_all(splited_ready: SplitedReadyFn) -> Self;
-    fn size() -> u16;
+pub struct ContextCombinator<Context1: Context, Context2: Context> {
+    context1: Context1,
+    context2: Context2,
 }
 
-impl<Combinator: ContextCombinator> Context for Combinator {
-    fn setup(all_ready: ReadyFn) -> Self
-    where
-        Self: Sized,
-    {
-        let splited_ready = n_times(all_ready, Self::size());
-        Self::setup_all(splited_ready)
+impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context1, Context2> {
+    /// Will be executed before the test execution
+    /// You should prepare all your test requirement here.
+    /// Use the `ready` to notify that the test can start
+    fn setup(both_ready: ReadyFn) -> Self {
+        let splited_ready = Arc::new(n_times(both_ready, 2));
+
+        let context1 = {
+            let splited_ready = splited_ready.clone();
+            Context1::setup(Box::new(move || splited_ready(0)))
+        };
+        let context2 = Context2::setup(Box::new(move || splited_ready(1)));
+
+        Self { context1, context2 }
     }
 
+    /// Will be executed before the test execution even if the test has panicked
+    /// You should do your clean up here.
     fn teardown(&mut self) {
-        self.contexts_mut()
-            .iter_mut()
-            .for_each(|context| context.teardown());
+        self.context1.teardown();
+        self.context2.teardown();
     }
 
     fn ready_checks_config(&self) -> ReadyChecksConfig {
-        let configs = self
-            .contexts()
-            .iter()
-            .map(|c| c.ready_checks_config())
-            .collect();
-
-        ReadyChecksConfig::get_longest(configs)
+        ReadyChecksConfig::get_longest(vec![
+            self.context1.ready_checks_config(),
+            self.context2.ready_checks_config(),
+        ])
     }
 }
 
 #[cfg(feature = "async")]
 mod asyncc {
+    use std::sync::Arc;
+
     use async_trait::async_trait;
     pub use tearup_macro::{tearup, tearup_test};
 
-    use crate::{n_times, AsyncContext, ReadyChecksConfig, ReadyFn, SplitedReadyFn};
+    use crate::{n_times, AsyncContext, ReadyChecksConfig, ReadyFn};
 
-    #[async_trait]
-    pub trait AsyncContextCombinator: Sync + Send {
-        fn contexts(&self) -> &Vec<Box<dyn AsyncContext>>;
-        fn contexts_mut(&mut self) -> &mut Vec<Box<dyn AsyncContext>>;
-        async fn setup_all(splited_ready: SplitedReadyFn) -> Self;
-        fn size() -> u16;
+    pub struct AsyncContextCombinator<Context1, Context2>
+    where
+        for<'a> Context1: AsyncContext<'a> + Send,
+        for<'a> Context2: AsyncContext<'a> + Send,
+    {
+        context1: Context1,
+        context2: Context2,
     }
 
     #[async_trait]
-    impl<Combinator: AsyncContextCombinator> AsyncContext<'_> for Combinator {
-        async fn setup(all_ready: ReadyFn) -> Self
-        where
-            Self: Sized,
-        {
-            let splited_ready = n_times(all_ready, Self::size());
-            Self::setup_all(splited_ready).await
+    impl<'b, Context1, Context2> AsyncContext<'b> for AsyncContextCombinator<Context1, Context2>
+    where
+        for<'a> Context1: AsyncContext<'a> + Send,
+        for<'a> Context2: AsyncContext<'a> + Send,
+    {
+        async fn setup(both_ready: ReadyFn) -> Self {
+            let splited_ready = Arc::new(n_times(both_ready, 2));
+            let context1 = {
+                let splited_ready = splited_ready.clone();
+                Context1::setup(Box::new(move || splited_ready(0))).await
+            };
+            let context2 = Context2::setup(Box::new(move || splited_ready(1))).await;
+
+            Self { context1, context2 }
         }
 
+        /// Will be executed before the test execution even if the test has panicked
+        /// You should do your clean up here.
         async fn teardown(&mut self) {
-            for context in self.contexts_mut().iter_mut() {
-                context.teardown().await;
-            }
+            self.context1.teardown().await;
+            self.context2.teardown().await;
         }
 
         fn ready_checks_config(&self) -> ReadyChecksConfig {
-            let configs = self
-                .contexts()
-                .iter()
-                .map(|c| c.ready_checks_config())
-                .collect();
-
-            ReadyChecksConfig::get_longest(configs)
+            ReadyChecksConfig::get_longest(vec![
+                self.context1.ready_checks_config(),
+                self.context2.ready_checks_config(),
+            ])
         }
     }
 }
