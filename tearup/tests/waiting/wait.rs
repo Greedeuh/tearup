@@ -1,19 +1,17 @@
-use tearup::{tearup, ContextCombinator, WaitingContext};
-mod helper;
-use helper::SlowContext;
+use crate::helper::SlowContext;
+use tearup::{tearup, WaitingContext};
 
 #[test]
 fn it_almost_timeout() {
     setup_almost_timeout()
 }
 
-type A = ContextCombinator<SlowContext, SlowContext>;
-#[tearup(A)]
+#[tearup(SlowContext)]
 fn setup_almost_timeout() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use tearup::{tearup, AsyncContext, AsyncContextCombinator};
+    use tearup::{tearup, AsyncContext};
 
     use crate::helper::AsyncSlowContext;
 
@@ -22,7 +20,6 @@ mod asyncc {
         setup_almost_timeout().await
     }
 
-    type A = AsyncContextCombinator<AsyncSlowContext, AsyncSlowContext>;
-    #[tearup(A)]
+    #[tearup(AsyncSlowContext)]
     async fn setup_almost_timeout() {}
 }

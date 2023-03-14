@@ -1,6 +1,5 @@
+use crate::helper::{InstantContext, TooSlowContext};
 use tearup::{tearup, ContextCombinator, WaitingContext};
-mod helper;
-use helper::{InstantContext, TooSlowContext};
 #[test]
 #[should_panic]
 fn it_barely_timeout() {

@@ -1,6 +1,5 @@
+use crate::helper::TooSlowContext;
 use tearup::{tearup, WaitingContext};
-mod helper;
-use helper::TooSlowContext;
 
 #[test]
 #[should_panic]
