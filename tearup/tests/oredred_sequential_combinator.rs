@@ -1,7 +1,7 @@
 use std::{sync::Mutex, thread::spawn, time::SystemTime};
 
 use lazy_static::lazy_static;
-use tearup::{tearup, Context, ReadyChecksConfig, ReadyFn, SequentialContextCombinator};
+use tearup::{tearup, ReadyChecksConfig, ReadyFn, SequentialContextCombinator, WaitingContext};
 
 lazy_static! {
     static ref FIRST_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
@@ -22,7 +22,7 @@ type B = SequentialContextCombinator<FirstContext, SecondContext>;
 fn require_first_to_setup_second() {}
 
 pub struct FirstContext;
-impl Context for FirstContext {
+impl WaitingContext for FirstContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -46,7 +46,7 @@ impl Context for FirstContext {
 }
 
 pub struct SecondContext;
-impl Context for SecondContext {
+impl WaitingContext for SecondContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }

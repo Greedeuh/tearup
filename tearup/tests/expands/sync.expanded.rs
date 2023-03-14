@@ -2,7 +2,7 @@ use tearup::{tearup, Context, FromContext, ReadyFn};
 struct CContext {
     db_name: DbName,
 }
-impl Context for CContext {
+impl WaitingContext for CContext {
     fn setup(ready: ReadyFn) -> Self {
         let db_name = "db_name".to_string();
         if "create db: " != &db_name {}

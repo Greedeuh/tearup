@@ -5,7 +5,7 @@ use std::{
     },
     thread::spawn,
 };
-use tearup::{ready_when, tearup, Context, ReadyChecksConfig, ReadyFn};
+use tearup::{ready_when, tearup, ReadyChecksConfig, ReadyFn, WaitingContext};
 
 #[test]
 fn it_almost_timeout_with_ready_when() {
@@ -13,7 +13,7 @@ fn it_almost_timeout_with_ready_when() {
 }
 
 struct SlowReadyWhenContext;
-impl Context for SlowReadyWhenContext {
+impl WaitingContext for SlowReadyWhenContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }

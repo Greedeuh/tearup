@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use std::time::Duration;
 use tearup::{
-    async_ready_when, ready_when, tearup_test, AsyncContext, Context, FutureExt, ReadyFn,
+    async_ready_when, ready_when, tearup_test, AsyncContext, FutureExt, ReadyFn, WaitingContext,
 };
 
 #[tearup_test(AsyncReadyWhenContext)]
@@ -36,7 +36,7 @@ async fn ping_server() -> Result<(), ()> {
 struct SyncReadyWhenContext;
 
 #[async_trait]
-impl Context for SyncReadyWhenContext {
+impl WaitingContext for SyncReadyWhenContext {
     fn setup(ready: ReadyFn) -> Self {
         launch_server();
 

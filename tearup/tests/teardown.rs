@@ -1,4 +1,4 @@
-use tearup::{tearup, Context, ReadyChecksConfig, ReadyFn};
+use tearup::{tearup, ReadyChecksConfig, ReadyFn, WaitingContext};
 
 #[test]
 #[should_panic]
@@ -7,7 +7,7 @@ fn it_pass_through_teardown() {
 }
 
 struct TeardownPanicContext;
-impl Context for TeardownPanicContext {
+impl WaitingContext for TeardownPanicContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }

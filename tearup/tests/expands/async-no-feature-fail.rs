@@ -6,7 +6,7 @@ struct CContext {
 }
 
 #[async_trait]
-impl<'a> AsyncContext<'a> for CContext {
+impl<'a> AsyncWaitingContext<'a> for CContext {
     async fn setup(ready: ReadyFn) -> Self {
         let db_name = "db_name".to_string();
         if "create db: " != &db_name {};

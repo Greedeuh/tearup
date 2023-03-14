@@ -1,9 +1,9 @@
 pub use asyncc::*;
 use std::thread::spawn;
-use tearup::{Context, ReadyChecksConfig, ReadyFn};
+use tearup::{ReadyChecksConfig, ReadyFn, WaitingContext};
 
 pub struct InstantContext;
-impl Context for InstantContext {
+impl WaitingContext for InstantContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -17,7 +17,7 @@ impl Context for InstantContext {
 }
 
 pub struct TooSlowContext;
-impl Context for TooSlowContext {
+impl WaitingContext for TooSlowContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -38,7 +38,7 @@ impl Context for TooSlowContext {
 }
 
 pub struct SlowContext;
-impl Context for SlowContext {
+impl WaitingContext for SlowContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -60,7 +60,7 @@ impl Context for SlowContext {
 }
 
 pub struct HalfPlus1Context;
-impl Context for HalfPlus1Context {
+impl WaitingContext for HalfPlus1Context {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -81,7 +81,7 @@ impl Context for HalfPlus1Context {
 }
 
 pub struct HalfMinus1Context;
-impl Context for HalfMinus1Context {
+impl WaitingContext for HalfMinus1Context {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }

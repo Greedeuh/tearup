@@ -1,16 +1,18 @@
 use std::sync::Arc;
 pub use tearup_macro::{tearup, tearup_test};
 
-use crate::{n_times, ready_state, Context, ReadyChecksConfig, ReadyFn};
+use crate::{n_times, ready_state, ReadyChecksConfig, ReadyFn, WaitingContext};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
-pub struct ContextCombinator<Context1: Context, Context2: Context> {
+pub struct ContextCombinator<Context1: WaitingContext, Context2: WaitingContext> {
     context1: Context1,
     context2: Context2,
 }
 
-impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context1, Context2> {
+impl<Context1: WaitingContext, Context2: WaitingContext> WaitingContext
+    for ContextCombinator<Context1, Context2>
+{
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
@@ -41,12 +43,12 @@ impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context
     }
 }
 
-pub struct SequentialContextCombinator<Context1: Context, Context2: Context> {
+pub struct SequentialContextCombinator<Context1: WaitingContext, Context2: WaitingContext> {
     context1: Context1,
     context2: Context2,
 }
 
-impl<Context1: Context, Context2: Context> Context
+impl<Context1: WaitingContext, Context2: WaitingContext> WaitingContext
     for SequentialContextCombinator<Context1, Context2>
 {
     /// Will be executed before the test execution

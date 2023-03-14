@@ -1,4 +1,4 @@
-use tearup::{tearup, Context, ContextCombinator};
+use tearup::{tearup, ContextCombinator, WaitingContext};
 mod helper;
 use helper::{InstantContext, TooSlowContext};
 #[test]

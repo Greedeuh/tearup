@@ -1,4 +1,4 @@
-use tearup::{tearup_test, Context, FromContext, ReadyFn};
+use tearup::{tearup_test, FromContext, ReadyFn, WaitingContext};
 
 #[tearup_test(SimpleContext)]
 fn it_setup_a_fake_db(mut db: DbClient) {
@@ -10,7 +10,7 @@ struct SimpleContext {
     db_client: DbClient,
 }
 
-impl Context for SimpleContext {
+impl WaitingContext for SimpleContext {
     fn setup(ready: ReadyFn) -> Self {
         let mut db_client = DbClient {
             name: "random_db_name".to_string(),

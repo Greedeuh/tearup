@@ -1,4 +1,4 @@
-use tearup::{tearup, Context, SequentialContextCombinator};
+use tearup::{tearup, SequentialContextCombinator, WaitingContext};
 mod helper;
 use helper::HalfMinus1Context;
 
