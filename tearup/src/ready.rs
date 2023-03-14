@@ -1,11 +1,27 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::{thread::sleep, time::Duration};
 
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
+pub type ReadyFlag = Arc<Mutex<bool>>;
 pub type ReadyFn = Box<dyn Fn() + Send + Sync>;
 pub type PredicateFn = Box<dyn Fn() -> bool + Send + Sync>;
+
+pub fn ready_state() -> (ReadyFlag, ReadyFn) {
+    let ready_flag = std::sync::Arc::new(std::sync::Mutex::new(false));
+
+    let ready = {
+        let ready_flag = ready_flag.clone();
+
+        Box::new(move || {
+            let mut ready = ready_flag.lock().unwrap();
+            *ready = true;
+        })
+    };
+
+    (ready_flag, ready)
+}
 
 pub struct ReadyChecksConfig {
     pub duration: Duration,

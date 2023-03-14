@@ -59,6 +59,48 @@ impl Context for SlowContext {
     fn teardown(&mut self) {}
 }
 
+pub struct HalfPlus1Context;
+impl Context for HalfPlus1Context {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
+        ReadyChecksConfig::ms100()
+    }
+
+    fn setup(ready: ReadyFn) -> Self {
+        spawn(move || {
+            let config = Self {}.ready_checks_config();
+            let just_after_max = (config.maximum + 1).try_into().unwrap();
+
+            std::thread::sleep((config.duration * just_after_max) / 2);
+
+            ready()
+        });
+        Self {}
+    }
+
+    fn teardown(&mut self) {}
+}
+
+pub struct HalfMinus1Context;
+impl Context for HalfMinus1Context {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
+        ReadyChecksConfig::ms100()
+    }
+
+    fn setup(ready: ReadyFn) -> Self {
+        spawn(move || {
+            let config = Self {}.ready_checks_config();
+            let just_after_max = (config.maximum - 1).try_into().unwrap();
+
+            std::thread::sleep((config.duration * just_after_max) / 2);
+
+            ready()
+        });
+        Self {}
+    }
+
+    fn teardown(&mut self) {}
+}
+
 #[cfg(feature = "async")]
 pub mod asyncc {
     use async_trait::async_trait;

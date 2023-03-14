@@ -23,3 +23,5 @@ tokio = { version = "1.20.1", features = ["rt", "macros", "time"], optional = tr
 
 [dev-dependencies]
 macrotest = "1.0.9"
+lazy_static = "1.4.0"
+stopwatch = "0.0.7"
