@@ -1,16 +1,15 @@
 #[cfg(feature = "async")]
 pub use asyncc::*;
 use std::{
-    any::Any,
     sync::{Arc, Mutex},
     thread::sleep,
 };
 use stopwatch::Stopwatch;
 
-use crate::{ReadyChecksConfig, ReadyFn};
+use crate::{ready_state, Context, ReadyChecksConfig, ReadyFn};
 
 /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
-pub trait WaitingContext {
+pub trait WaitingContext: Context {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
@@ -27,29 +26,32 @@ pub trait WaitingContext {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms500()
     }
+}
 
-    fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
-        let ready_checks = self.ready_checks_config();
-        let maxium_duration = ready_checks.maxium_duration();
-
-        let ready = || *ready.lock().unwrap();
-
-        let stopwatch = Stopwatch::start_new();
-        while !ready() {
-            if stopwatch.elapsed() >= maxium_duration {
-                panic!("Setup has timeout, make sure to pass the 'ready: Arc<Mutex<bool>>' to true")
-            }
-            sleep(ready_checks.duration);
-        }
+impl<T: WaitingContext> Context for T {
+    fn launch_setup() -> Self {
+        let (ready_flag, ready) = ready_state();
+        let context = Self::setup(ready);
+        wait_setup(context.ready_checks_config(), ready_flag);
+        context
     }
 
-    /// Execute the test and catch panic
-    fn test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
-    where
-        TestFn: FnOnce(),
-        Self: Sized,
-    {
-        std::panic::catch_unwind(std::panic::AssertUnwindSafe(test))
+    fn launch_teardown(&mut self) {
+        self.teardown();
+    }
+}
+
+fn wait_setup(ready_checks: ReadyChecksConfig, ready: Arc<Mutex<bool>>) {
+    let maxium_duration = ready_checks.maxium_duration();
+
+    let ready = || *ready.lock().unwrap();
+
+    let stopwatch = Stopwatch::start_new();
+    while !ready() {
+        if stopwatch.elapsed() >= maxium_duration {
+            panic!("Setup has timeout, make sure to call the 'ready' fn or raise up timeout.")
+        }
+        sleep(ready_checks.duration);
     }
 }
 

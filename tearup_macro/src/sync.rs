@@ -14,25 +14,17 @@ pub fn body(
     let result = quote! {
 
         #(#attrs)* fn #name() {
-            let ready_flag = std::sync::Arc::new(std::sync::Mutex::new(false));
+            use tearup::Context;
 
-            let ready_flag_given = ready_flag.clone();
-            let ready = Box::new(move || {
-                let mut ready = ready_flag_given.lock().unwrap();
-                *ready = true;
-            });
-
-            let mut context = #context::setup(ready);
+            let mut context = #context::launch_setup();
 
             #let_args
 
-            context.wait_setup(ready_flag);
-
-            let text_execution = context.test(move || {
+            let text_execution = context.launch_test(move || {
                 #(#stmts)*
             });
 
-            context.teardown();
+            context.launch_teardown();
 
             if let Err(err) = text_execution {
                 std::panic::resume_unwind(err)

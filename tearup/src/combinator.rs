@@ -1,7 +1,7 @@
 use std::sync::Arc;
 pub use tearup_macro::{tearup, tearup_test};
 
-use crate::{n_times, ready_state, ReadyChecksConfig, ReadyFn, WaitingContext};
+use crate::{n_times, ReadyChecksConfig, ReadyFn, WaitingContext};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
@@ -55,10 +55,7 @@ impl<Context1: WaitingContext, Context2: WaitingContext> WaitingContext
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
     fn setup(both_ready: ReadyFn) -> Self {
-        let (ready_flag, ready) = ready_state();
-
-        let mut context1 = Context1::setup(ready);
-        context1.wait_setup(ready_flag);
+        let context1 = Context1::launch_setup();
 
         let context2 = Context2::setup(both_ready);
 

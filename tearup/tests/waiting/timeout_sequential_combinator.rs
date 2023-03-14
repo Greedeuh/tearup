@@ -1,5 +1,5 @@
 use crate::helper::{SlowContext, TooSlowContext};
-use tearup::{tearup, SequentialContextCombinator, WaitingContext};
+use tearup::{tearup, SequentialContextCombinator};
 
 #[test]
 #[should_panic]

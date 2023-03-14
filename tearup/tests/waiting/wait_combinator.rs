@@ -1,5 +1,5 @@
 use crate::helper::SlowContext;
-use tearup::{tearup, ContextCombinator, WaitingContext};
+use tearup::{tearup, ContextCombinator};
 
 #[test]
 fn it_almost_timeout() {
