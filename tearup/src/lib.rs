@@ -1,5 +1,6 @@
 #[cfg(feature = "async")]
 pub use asyncc::*;
+use stopwatch::Stopwatch;
 pub use tearup_macro::{tearup, tearup_test};
 
 mod combinator;
@@ -33,13 +34,13 @@ pub trait Context {
 
     fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
         let ready_checks = self.ready_checks_config();
+        let maxium_duration = ready_checks.maxium_duration();
 
         let ready = || *ready.lock().unwrap();
 
-        let mut checks_done = 0;
-        while !ready() && checks_done <= ready_checks.maximum {
-            checks_done += 1;
-            if checks_done == ready_checks.maximum {
+        let stopwatch = Stopwatch::start_new();
+        while !ready() {
+            if stopwatch.elapsed() >= maxium_duration {
                 panic!("Setup has timeout, make sure to pass the 'ready: Arc<Mutex<bool>>' to true")
             }
             sleep(ready_checks.duration);
@@ -71,6 +72,7 @@ mod asyncc {
         panic::AssertUnwindSafe,
         sync::{Arc, Mutex},
     };
+    use stopwatch::Stopwatch;
     use tokio::time::sleep;
 
     use crate::{ReadyChecksConfig, ReadyFn};
@@ -97,13 +99,13 @@ mod asyncc {
 
         async fn wait_setup(&mut self, ready: Arc<Mutex<bool>>) {
             let ready_checks = self.ready_checks_config();
+            let maxium_duration = ready_checks.maxium_duration();
 
             let ready = || *ready.lock().unwrap();
 
-            let mut checks_done = 0;
-            while !ready() && checks_done < ready_checks.maximum {
-                checks_done += 1;
-                if checks_done == ready_checks.maximum {
+            let stopwatch = Stopwatch::start_new();
+            while !ready() {
+                if stopwatch.elapsed() >= maxium_duration {
                     panic!("Setup has timeout, make sure to pass the 'ready: Arc<Mutex<bool>>' to true")
                 }
                 sleep(ready_checks.duration).await;

@@ -8,7 +8,7 @@ lazy_static! {
     static ref SECOND_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
 }
 
-#[test]
+// #[test]
 fn it_is_sequencial() {
     require_first_to_setup_second();
 

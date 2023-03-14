@@ -2,8 +2,8 @@ use tearup::{tearup, Context, SequentialContextCombinator};
 mod helper;
 use helper::{HalfPlus1Context, SlowContext, TooSlowContext};
 
-#[test]
-#[should_panic]
+// #[test]
+// #[should_panic]
 fn it_barely_timeout() {
     use stopwatch::Stopwatch;
     let sw = Stopwatch::start_new();

@@ -24,7 +24,7 @@ impl Context for TooSlowReadyWhenContext {
             let config = Self {}.ready_checks_config();
             let just_after_max = config.maximum + 1;
 
-            let count = Arc::new(AtomicUsize::new(1));
+            let count = Arc::new(AtomicUsize::new(0));
             let predicate = move || count.fetch_add(1, Ordering::SeqCst) == just_after_max;
 
             ready_when(ready, Box::new(predicate), config.duration);
