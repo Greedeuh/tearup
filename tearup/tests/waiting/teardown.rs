@@ -28,7 +28,7 @@ fn teardown_panic() {}
 #[cfg(feature = "async")]
 mod asyncc {
     use async_trait::async_trait;
-    use tearup::{tearup, AsyncContext, ReadyChecksConfig, ReadyFn};
+    use tearup::{tearup, AsyncWaitingContext, ReadyChecksConfig, ReadyFn};
 
     #[tokio::test]
     #[should_panic]
@@ -38,7 +38,7 @@ mod asyncc {
 
     struct TeardownPanicContext;
     #[async_trait]
-    impl AsyncContext<'_> for TeardownPanicContext {
+    impl AsyncWaitingContext<'_> for TeardownPanicContext {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }

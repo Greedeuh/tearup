@@ -13,7 +13,7 @@ pub fn tearup(attr: TokenStream, input: TokenStream) -> TokenStream {
 
 /// ```
 /// use async_trait::async_trait;
-/// use tearup::{tearup_test, AsyncContext, FromAsyncContext, ReadyFn};
+/// use tearup::{tearup_test, AsyncWaitingContext, FromAsyncContext, ReadyFn};
 ///
 /// // First define your context
 /// struct YourContext {
@@ -22,7 +22,7 @@ pub fn tearup(attr: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// // Second implement your setup/teardown
 /// #[async_trait]
-/// impl<'a> AsyncContext<'a> for YourContext {
+/// impl<'a> AsyncWaitingContext<'a> for YourContext {
 ///     async fn setup(ready: ReadyFn) -> Self {
 ///         /* do your stuff... */
 ///         ready(); // notify that your setup id ready

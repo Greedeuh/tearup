@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use tearup::{tearup_test, AsyncContext, FromAsyncContext, ReadyFn};
+use tearup::{tearup_test, AsyncWaitingContext, FromAsyncContext, ReadyFn};
 
 #[tearup_test(SimpleContext)]
 async fn it_setup_a_fake_db(mut db: DbClient) {
@@ -15,7 +15,7 @@ struct SimpleContext {
 }
 
 #[async_trait]
-impl<'a> AsyncContext<'a> for SimpleContext {
+impl<'a> AsyncWaitingContext<'a> for SimpleContext {
     async fn setup(ready: ReadyFn) -> Self {
         let mut db_client = DbClient {
             name: "random_db_name".to_string(),

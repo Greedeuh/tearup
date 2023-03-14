@@ -45,7 +45,9 @@ mod asyncc {
         atomic::{AtomicUsize, Ordering},
         Arc,
     };
-    use tearup::{async_ready_when, tearup, AsyncContext, FutureExt, ReadyChecksConfig, ReadyFn};
+    use tearup::{
+        async_ready_when, tearup, AsyncWaitingContext, FutureExt, ReadyChecksConfig, ReadyFn,
+    };
     use tokio::spawn;
 
     #[tokio::test]
@@ -56,7 +58,7 @@ mod asyncc {
 
     struct TooSlowReadyWhenContext;
     #[async_trait]
-    impl AsyncContext<'_> for TooSlowReadyWhenContext {
+    impl AsyncWaitingContext<'_> for TooSlowReadyWhenContext {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }

@@ -1,7 +1,8 @@
 use async_trait::async_trait;
 use std::time::Duration;
 use tearup::{
-    async_ready_when, ready_when, tearup_test, AsyncContext, FutureExt, ReadyFn, WaitingContext,
+    async_ready_when, ready_when, tearup_test, AsyncWaitingContext, FutureExt, ReadyFn,
+    WaitingContext,
 };
 
 #[tearup_test(AsyncReadyWhenContext)]
@@ -10,7 +11,7 @@ async fn setup_barely_timeout_with_ready_when() {}
 struct AsyncReadyWhenContext;
 
 #[async_trait]
-impl AsyncContext<'_> for AsyncReadyWhenContext {
+impl AsyncWaitingContext<'_> for AsyncReadyWhenContext {
     async fn setup(ready: ReadyFn) -> Self {
         launch_server();
 

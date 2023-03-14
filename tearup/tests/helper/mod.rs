@@ -104,12 +104,12 @@ impl WaitingContext for HalfMinus1Context {
 #[cfg(feature = "async")]
 pub mod asyncc {
     use async_trait::async_trait;
-    use tearup::{AsyncContext, ReadyChecksConfig, ReadyFn};
+    use tearup::{AsyncWaitingContext, ReadyChecksConfig, ReadyFn};
     use tokio::{spawn, time::sleep};
 
     pub struct AsyncInstantContext;
     #[async_trait]
-    impl AsyncContext<'_> for AsyncInstantContext {
+    impl AsyncWaitingContext<'_> for AsyncInstantContext {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
@@ -124,7 +124,7 @@ pub mod asyncc {
 
     pub struct AsyncTooSlowContext;
     #[async_trait]
-    impl AsyncContext<'_> for AsyncTooSlowContext {
+    impl AsyncWaitingContext<'_> for AsyncTooSlowContext {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
@@ -146,7 +146,7 @@ pub mod asyncc {
 
     pub struct AsyncSlowContext;
     #[async_trait]
-    impl AsyncContext<'_> for AsyncSlowContext {
+    impl AsyncWaitingContext<'_> for AsyncSlowContext {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }

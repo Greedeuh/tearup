@@ -81,22 +81,22 @@ mod asyncc {
     use async_trait::async_trait;
     pub use tearup_macro::{tearup, tearup_test};
 
-    use crate::{n_times, AsyncContext, ReadyChecksConfig, ReadyFn};
+    use crate::{n_times, AsyncWaitingContext, ReadyChecksConfig, ReadyFn};
 
     pub struct AsyncContextCombinator<Context1, Context2>
     where
-        for<'a> Context1: AsyncContext<'a> + Send,
-        for<'a> Context2: AsyncContext<'a> + Send,
+        for<'a> Context1: AsyncWaitingContext<'a> + Send,
+        for<'a> Context2: AsyncWaitingContext<'a> + Send,
     {
         context1: Context1,
         context2: Context2,
     }
 
     #[async_trait]
-    impl<'b, Context1, Context2> AsyncContext<'b> for AsyncContextCombinator<Context1, Context2>
+    impl<'b, Context1, Context2> AsyncWaitingContext<'b> for AsyncContextCombinator<Context1, Context2>
     where
-        for<'a> Context1: AsyncContext<'a> + Send,
-        for<'a> Context2: AsyncContext<'a> + Send,
+        for<'a> Context1: AsyncWaitingContext<'a> + Send,
+        for<'a> Context2: AsyncWaitingContext<'a> + Send,
     {
         async fn setup(both_ready: ReadyFn) -> Self {
             let splited_ready = Arc::new(n_times(both_ready, 2));

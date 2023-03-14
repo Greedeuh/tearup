@@ -19,7 +19,7 @@ fn setup_barely_timeout_reversed() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use tearup::{tearup, AsyncContext, AsyncContextCombinator};
+    use tearup::{tearup, AsyncContextCombinator};
 
     use crate::helper::{AsyncInstantContext, AsyncTooSlowContext};
 

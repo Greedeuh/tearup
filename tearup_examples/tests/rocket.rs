@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use rocket::fairing::AdHoc;
-use tearup::{tearup_test, AsyncContext, FromAsyncContext, ReadyFn};
+use tearup::{tearup_test, AsyncWaitingContext, FromAsyncContext, ReadyFn};
 use tearup_examples::rocket;
 
 #[tearup_test(RocketContext)]
@@ -26,7 +26,7 @@ lazy_static! {
 }
 
 #[async_trait]
-impl<'a> AsyncContext<'a> for RocketContext {
+impl<'a> AsyncWaitingContext<'a> for RocketContext {
     async fn setup(ready: ReadyFn) -> Self {
         let port = choose_port().await;
 

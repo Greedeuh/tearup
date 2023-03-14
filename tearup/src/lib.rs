@@ -17,6 +17,6 @@ pub trait FromContext<C: WaitingContext> {
 /// Trait to implement if you need to access a setup value in you test.
 #[cfg(feature = "async")]
 #[async_trait]
-pub trait FromAsyncContext<'a, C: AsyncContext<'a>> {
+pub trait FromAsyncContext<'a, C: AsyncWaitingContext<'a>> {
     async fn from_context(context: &C) -> Self;
 }

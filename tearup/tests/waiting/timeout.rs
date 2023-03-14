@@ -12,7 +12,7 @@ fn setup_barely_timeout() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use tearup::{tearup, AsyncContext};
+    use tearup::tearup;
 
     use crate::helper::AsyncTooSlowContext;
 

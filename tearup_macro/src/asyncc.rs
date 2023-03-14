@@ -15,27 +15,20 @@ pub fn body(
 
         #(#attrs)* async fn #name() {
             use tearup::FutureExt;
+            use tearup::AsyncContext;
 
-            let ready_flag = std::sync::Arc::new(std::sync::Mutex::new(false));
 
-            let ready_flag_given = ready_flag.clone();
-            let ready = Box::new(move || {
-                let mut ready = ready_flag_given.lock().unwrap();
-                *ready = true;
-            });
-
-            let mut context = #context::setup(ready).await;
-            context.wait_setup(ready_flag).await;
+            let mut context = #context::launch_setup().await;
 
             #let_args
 
-            let text_execution = context.test(move || {
+            let text_execution = context.launch_test(move || {
                 async move {
                     #(#stmts)*
                 }.boxed()
             }).await;
 
-            context.teardown().await;
+            context.launch_teardown().await;
 
             if let Err(err) = text_execution {
                 std::panic::resume_unwind(err)
