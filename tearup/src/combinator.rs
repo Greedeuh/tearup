@@ -71,10 +71,7 @@ impl<Context1: Context, Context2: Context> Context
     }
 
     fn ready_checks_config(&self) -> ReadyChecksConfig {
-        ReadyChecksConfig::get_longest(vec![
-            self.context1.ready_checks_config(),
-            self.context2.ready_checks_config(),
-        ])
+        self.context2.ready_checks_config()
     }
 }
 
