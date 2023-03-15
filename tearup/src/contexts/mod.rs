@@ -4,7 +4,9 @@ use std::any::Any;
 #[cfg(feature = "async")]
 use std::panic::AssertUnwindSafe;
 
+mod concurrent_combinator;
 mod waiting;
+pub use concurrent_combinator::*;
 pub use waiting::*;
 mod simple;
 pub use simple::*;

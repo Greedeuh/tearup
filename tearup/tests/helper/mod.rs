@@ -1,6 +1,14 @@
 pub use asyncc::*;
 use std::thread::spawn;
+use stopwatch::Stopwatch;
 use tearup::{ReadyChecksConfig, ReadyFn, WaitingContext};
+
+#[allow(dead_code)]
+pub fn assert_around_100ms(stopwatch: &Stopwatch) {
+    let ms = stopwatch.elapsed_ms();
+    assert!(110 > ms, "stopwatch has {} elapsed ms > 90", ms);
+    assert!(ms > 90, "stopwatch has {} elapsed ms < 110", ms);
+}
 
 pub struct InstantContext;
 impl WaitingContext for InstantContext {
