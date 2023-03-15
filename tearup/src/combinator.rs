@@ -4,13 +4,13 @@ use crate::SimpleContext;
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
-pub struct SequentialContextCombinator<Context1: SimpleContext, Context2: SimpleContext> {
+pub struct ContextCombinator<Context1: SimpleContext, Context2: SimpleContext> {
     context1: Context1,
     context2: Context2,
 }
 
 impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
-    for SequentialContextCombinator<Context1, Context2>
+    for ContextCombinator<Context1, Context2>
 {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
@@ -32,36 +32,29 @@ impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use std::sync::Arc;
-
     use async_trait::async_trait;
     pub use tearup_macro::{tearup, tearup_test};
 
-    use crate::{n_times, AsyncWaitingContext, ReadyChecksConfig, ReadyFn};
+    use crate::AsyncSimpleContext;
 
     pub struct AsyncContextCombinator<Context1, Context2>
     where
-        for<'a> Context1: AsyncWaitingContext<'a> + Send,
-        for<'a> Context2: AsyncWaitingContext<'a> + Send,
+        for<'a> Context1: AsyncSimpleContext<'a> + Send,
+        for<'a> Context2: AsyncSimpleContext<'a> + Send,
     {
         context1: Context1,
         context2: Context2,
     }
 
     #[async_trait]
-    impl<'b, Context1, Context2> AsyncWaitingContext<'b> for AsyncContextCombinator<Context1, Context2>
+    impl<Context1, Context2> AsyncSimpleContext<'_> for AsyncContextCombinator<Context1, Context2>
     where
-        for<'a> Context1: AsyncWaitingContext<'a> + Send,
-        for<'a> Context2: AsyncWaitingContext<'a> + Send,
+        for<'a> Context1: AsyncSimpleContext<'a> + Send,
+        for<'a> Context2: AsyncSimpleContext<'a> + Send,
     {
-        async fn setup(both_ready: ReadyFn) -> Self {
-            let splited_ready = Arc::new(n_times(both_ready, 2));
-            let context1 = {
-                let splited_ready = splited_ready.clone();
-                Context1::setup(Box::new(move || splited_ready(0))).await
-            };
-            let context2 = Context2::setup(Box::new(move || splited_ready(1))).await;
-
+        async fn setup() -> Self {
+            let context1 = Context1::launch_setup().await;
+            let context2 = Context2::launch_setup().await;
             Self { context1, context2 }
         }
 
@@ -70,13 +63,6 @@ mod asyncc {
         async fn teardown(&mut self) {
             self.context1.teardown().await;
             self.context2.teardown().await;
-        }
-
-        fn ready_checks_config(&self) -> ReadyChecksConfig {
-            ReadyChecksConfig::get_longest(vec![
-                self.context1.ready_checks_config(),
-                self.context2.ready_checks_config(),
-            ])
         }
     }
 }

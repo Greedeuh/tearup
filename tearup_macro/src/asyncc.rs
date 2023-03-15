@@ -15,7 +15,7 @@ pub fn body(
 
         #(#attrs)* async fn #name() {
             use tearup::FutureExt;
-            use tearup::{AsyncSimpleContext,AsyncWaitingContext};
+            use tearup::{AsyncSimpleContext, AsyncWaitingContext};
 
 
             let mut context = #context::launch_setup().await;

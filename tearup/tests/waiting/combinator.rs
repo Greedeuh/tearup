@@ -1,7 +1,7 @@
 use std::{sync::Mutex, thread::spawn, time::SystemTime};
 
 use lazy_static::lazy_static;
-use tearup::{tearup, ReadyChecksConfig, ReadyFn, SequentialContextCombinator, WaitingContext};
+use tearup::{tearup, ContextCombinator, ReadyChecksConfig, ReadyFn, WaitingContext};
 
 lazy_static! {
     static ref FIRST_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
@@ -17,7 +17,7 @@ fn it_is_sequencial() {
     assert!(first_checkpoint.unwrap() < second_checkpoint.unwrap());
 }
 
-type B = SequentialContextCombinator<FirstContext, SecondContext>;
+type B = ContextCombinator<FirstContext, SecondContext>;
 #[tearup(B)]
 fn require_first_to_setup_second() {}
 

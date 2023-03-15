@@ -61,16 +61,12 @@ fn wait_setup(ready_checks: ReadyChecksConfig, ready: Arc<Mutex<bool>>) {
 #[cfg(feature = "async")]
 mod asyncc {
     use async_trait::async_trait;
-    use futures::future::BoxFuture;
     pub use futures::future::FutureExt;
-    use std::{
-        any::Any,
-        sync::{Arc, Mutex},
-    };
+    use std::sync::{Arc, Mutex};
     use stopwatch::Stopwatch;
     use tokio::time::sleep;
 
-    use crate::{contexts::async_launch_test, ready_state, ReadyChecksConfig, ReadyFn};
+    use crate::{ready_state, AsyncSimpleContext, ReadyChecksConfig, ReadyFn};
 
     /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
@@ -91,8 +87,11 @@ mod asyncc {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms500()
         }
+    }
 
-        async fn launch_setup() -> Self
+    #[async_trait]
+    impl<'a, T: AsyncWaitingContext<'a>> AsyncSimpleContext<'a> for T {
+        async fn setup() -> Self
         where
             Self: Sized,
         {
@@ -102,15 +101,7 @@ mod asyncc {
             context
         }
 
-        async fn launch_test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
-        where
-            TestFn: FnOnce() -> BoxFuture<'a, ()> + Send,
-            Self: Sized,
-        {
-            async_launch_test(test).await
-        }
-
-        async fn launch_teardown(&mut self) {
+        async fn teardown(&mut self) {
             self.teardown().await;
         }
     }
