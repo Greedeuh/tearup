@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use tearup::{tearup, AsyncContext, FromAsyncContext, ReadyFn};
+use tearup::{tearup, AsyncWaitingContext, FromAsyncContext, ReadyFn};
 struct CContext {
     db_name: DbName,
 }
