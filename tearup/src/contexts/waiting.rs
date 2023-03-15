@@ -1,13 +1,12 @@
 #[cfg(feature = "async")]
 pub use asyncc::*;
 use std::{
-    any::Any,
     sync::{Arc, Mutex},
     thread::sleep,
 };
 use stopwatch::Stopwatch;
 
-use crate::{launch_test, ready_state, ReadyChecksConfig, ReadyFn};
+use crate::{ready_state, ReadyChecksConfig, ReadyFn, SimpleContext};
 
 /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
 pub trait WaitingContext: Sized {
@@ -27,23 +26,20 @@ pub trait WaitingContext: Sized {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms500()
     }
+}
 
-    fn launch_setup() -> Self {
+impl<T: WaitingContext> SimpleContext for T {
+    fn setup() -> Self
+    where
+        Self: Sized,
+    {
         let (ready_flag, ready) = ready_state();
         let context = Self::setup(ready);
         wait_setup(context.ready_checks_config(), ready_flag);
         context
     }
 
-    fn launch_test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
-    where
-        TestFn: FnOnce(),
-        Self: Sized,
-    {
-        launch_test(test)
-    }
-
-    fn launch_teardown(&mut self) {
+    fn teardown(&mut self) {
         self.teardown();
     }
 }
