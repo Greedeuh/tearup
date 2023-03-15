@@ -14,7 +14,7 @@ pub fn body(
     let result = quote! {
 
         #(#attrs)* fn #name() {
-            use tearup::Context;
+            use tearup::{SimpleContext,WaitingContext};
 
             let mut context = #context::launch_setup();
 

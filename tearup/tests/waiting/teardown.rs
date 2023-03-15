@@ -1,9 +1,20 @@
+use lazy_static::lazy_static;
+use std::{sync::Mutex, time::SystemTime};
 use tearup::{tearup, ReadyChecksConfig, ReadyFn, WaitingContext};
 
+lazy_static! {
+    static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+    static ref TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+}
+
 #[test]
-#[should_panic]
 fn it_pass_through_teardown() {
-    teardown_panic()
+    teardown_panic();
+
+    let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().unwrap().unwrap();
+    let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap().unwrap();
+
+    assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
 }
 
 struct TeardownPanicContext;
@@ -13,12 +24,15 @@ impl WaitingContext for TeardownPanicContext {
     }
 
     fn setup(ready: ReadyFn) -> Self {
+        let mut checkpoint = SETUP_CHECKPOINT.lock().unwrap();
+        *checkpoint = Some(SystemTime::now());
         ready();
         Self {}
     }
 
     fn teardown(&mut self) {
-        panic!()
+        let mut checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap();
+        *checkpoint = Some(SystemTime::now());
     }
 }
 
@@ -28,12 +42,23 @@ fn teardown_panic() {}
 #[cfg(feature = "async")]
 mod asyncc {
     use async_trait::async_trait;
+    use lazy_static::lazy_static;
+    use std::{sync::Mutex, time::SystemTime};
     use tearup::{tearup, AsyncWaitingContext, ReadyChecksConfig, ReadyFn};
 
+    lazy_static! {
+        static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+        static ref TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+    }
+
     #[tokio::test]
-    #[should_panic]
     async fn it_pass_through_teardown() {
-        teardown_panic().await
+        teardown_panic().await;
+
+        let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().unwrap().unwrap();
+        let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap().unwrap();
+
+        assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
     }
 
     struct TeardownPanicContext;
@@ -44,12 +69,15 @@ mod asyncc {
         }
 
         async fn setup(ready: ReadyFn) -> Self {
+            let mut checkpoint = SETUP_CHECKPOINT.lock().unwrap();
+            *checkpoint = Some(SystemTime::now());
             ready();
             Self {}
         }
 
         async fn teardown(&mut self) {
-            panic!()
+            let mut checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap();
+            *checkpoint = Some(SystemTime::now());
         }
     }
 

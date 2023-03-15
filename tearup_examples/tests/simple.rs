@@ -1,16 +1,16 @@
 use tearup::{tearup_test, FromContext, ReadyFn, WaitingContext};
 
-#[tearup_test(SimpleContext)]
+#[tearup_test(SimpleContextX)]
 fn it_setup_a_fake_db(mut db: DbClient) {
     db.execute("some action with a side effect on DB");
     assert_eq!("some res", db.query("some query to assert the side effect"));
 }
 
-struct SimpleContext {
+struct SimpleContextX {
     db_client: DbClient,
 }
 
-impl WaitingContext for SimpleContext {
+impl WaitingContext for SimpleContextX {
     fn setup(ready: ReadyFn) -> Self {
         let mut db_client = DbClient {
             name: "random_db_name".to_string(),
@@ -43,8 +43,8 @@ impl DbClient {
     }
 }
 
-impl FromContext<SimpleContext> for DbClient {
-    fn from_context(context: &SimpleContext) -> Self {
+impl FromContext<SimpleContextX> for DbClient {
+    fn from_context(context: &SimpleContextX) -> Self {
         context.db_client.clone()
     }
 }

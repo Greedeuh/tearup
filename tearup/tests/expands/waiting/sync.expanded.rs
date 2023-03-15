@@ -27,7 +27,7 @@ impl FromContext<CContext> for DbName {
     }
 }
 fn test_with_db_setup_and_teardown() {
-    use tearup::Context;
+    use tearup::{SimpleContext, WaitingContext};
     let mut context = CContext::launch_setup();
     let db_name = <DbName as tearup::FromContext<CContext>>::from_context(&context);
     let text_execution = context

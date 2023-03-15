@@ -1,15 +1,16 @@
 #[cfg(feature = "async")]
 pub use asyncc::*;
 use std::{
+    any::Any,
     sync::{Arc, Mutex},
     thread::sleep,
 };
 use stopwatch::Stopwatch;
 
-use crate::{ready_state, Context, ReadyChecksConfig, ReadyFn};
+use crate::{ready_state, ReadyChecksConfig, ReadyFn};
 
 /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
-pub trait WaitingContext: Context {
+pub trait WaitingContext: Sized {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
@@ -26,14 +27,20 @@ pub trait WaitingContext: Context {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms500()
     }
-}
 
-impl<T: WaitingContext> Context for T {
     fn launch_setup() -> Self {
         let (ready_flag, ready) = ready_state();
         let context = Self::setup(ready);
         wait_setup(context.ready_checks_config(), ready_flag);
         context
+    }
+
+    fn launch_test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
+    where
+        TestFn: FnOnce(),
+        Self: Sized,
+    {
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(test))
     }
 
     fn launch_teardown(&mut self) {
@@ -58,16 +65,21 @@ fn wait_setup(ready_checks: ReadyChecksConfig, ready: Arc<Mutex<bool>>) {
 #[cfg(feature = "async")]
 mod asyncc {
     use async_trait::async_trait;
+    use futures::future::BoxFuture;
     pub use futures::future::FutureExt;
-    use std::sync::{Arc, Mutex};
+    use std::{
+        any::Any,
+        panic::AssertUnwindSafe,
+        sync::{Arc, Mutex},
+    };
     use stopwatch::Stopwatch;
     use tokio::time::sleep;
 
-    use crate::{ready_state, AsyncContext, ReadyChecksConfig, ReadyFn};
+    use crate::{ready_state, ReadyChecksConfig, ReadyFn};
 
     /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
-    pub trait AsyncWaitingContext<'a>: Sync + Send + AsyncContext<'a> {
+    pub trait AsyncWaitingContext<'a>: Sync + Send {
         /// Will be executed before the test execution
         /// You should prepare all your test requirement here.
         /// Use the `ready` to notify that the test can start
@@ -84,15 +96,25 @@ mod asyncc {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms500()
         }
-    }
 
-    #[async_trait]
-    impl<'a, T: AsyncWaitingContext<'a>> AsyncContext<'a> for T {
-        async fn launch_setup() -> Self {
+        async fn launch_setup() -> Self
+        where
+            Self: Sized,
+        {
             let (ready_flag, ready) = ready_state();
             let context = Self::setup(ready).await;
             wait_setup(context.ready_checks_config(), ready_flag).await;
             context
+        }
+
+        async fn launch_test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
+        where
+            TestFn: FnOnce() -> BoxFuture<'a, ()> + Send,
+            Self: Sized,
+        {
+            AssertUnwindSafe(async move { test().await })
+                .catch_unwind()
+                .await
         }
 
         async fn launch_teardown(&mut self) {

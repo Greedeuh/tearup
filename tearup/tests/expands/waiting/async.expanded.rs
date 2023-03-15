@@ -29,6 +29,3 @@ impl FromAsyncContext<'_, CContext> for DbName {
         context.db_name.clone()
     }
 }
-async fn foo(db_name: &DbName) {
-    if "db_name" == db_name.0 {}
-}
