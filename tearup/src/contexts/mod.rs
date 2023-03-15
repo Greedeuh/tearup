@@ -8,6 +8,8 @@ mod waiting;
 pub use waiting::*;
 mod simple;
 pub use simple::*;
+mod sequential_combinator;
+pub use sequential_combinator::*;
 
 pub(crate) fn launch_test<TestFn>(test: TestFn) -> Result<(), Box<dyn Any + Send>>
 where

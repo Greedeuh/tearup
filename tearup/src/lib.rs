@@ -2,9 +2,7 @@
 pub use async_trait::async_trait;
 pub use tearup_macro::{tearup, tearup_test};
 
-mod combinator;
 mod contexts;
-pub use combinator::*;
 pub use contexts::*;
 mod ready;
 pub use ready::*;
