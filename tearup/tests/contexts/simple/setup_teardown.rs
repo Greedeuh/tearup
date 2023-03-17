@@ -1,5 +1,9 @@
 use lazy_static::lazy_static;
-use std::{sync::Mutex, time::SystemTime};
+use std::{
+    sync::Mutex,
+    thread::sleep,
+    time::{Duration, SystemTime},
+};
 use tearup::{tearup, SimpleContext};
 
 lazy_static! {
@@ -8,7 +12,7 @@ lazy_static! {
 }
 
 #[test]
-fn it_pass_through_teardown() {
+fn it_pass_through_setup_then_teardown() {
     teardown_panic();
 
     let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().unwrap().unwrap();
@@ -17,11 +21,13 @@ fn it_pass_through_teardown() {
     assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
 }
 
-struct TeardownPanicContext;
-impl SimpleContext for TeardownPanicContext {
+struct NiceContext;
+impl SimpleContext for NiceContext {
     fn setup() -> Self {
         let mut checkpoint = SETUP_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
+
+        sleep(Duration::from_millis(10));
 
         Self {}
     }
@@ -32,15 +38,16 @@ impl SimpleContext for TeardownPanicContext {
     }
 }
 
-#[tearup(TeardownPanicContext)]
+#[tearup(NiceContext)]
 fn teardown_panic() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
     use async_trait::async_trait;
     use lazy_static::lazy_static;
-    use std::{sync::Mutex, time::SystemTime};
+    use std::time::{Duration, SystemTime};
     use tearup::{tearup, AsyncSimpleContext};
+    use tokio::{sync::Mutex, time::sleep};
 
     lazy_static! {
         static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
@@ -48,31 +55,33 @@ mod asyncc {
     }
 
     #[tokio::test]
-    async fn it_pass_through_teardown() {
+    async fn it_pass_through_setup_then_teardown() {
         teardown_panic().await;
 
-        let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().unwrap().unwrap();
-        let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap().unwrap();
+        let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().await.unwrap();
+        let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().await.unwrap();
 
         assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
     }
 
-    struct TeardownPanicContext;
+    struct NiceContext;
     #[async_trait]
-    impl AsyncSimpleContext<'_> for TeardownPanicContext {
+    impl AsyncSimpleContext<'_> for NiceContext {
         async fn setup() -> Self {
-            let mut checkpoint = SETUP_CHECKPOINT.lock().unwrap();
+            let mut checkpoint = SETUP_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
+
+            sleep(Duration::from_millis(10)).await;
 
             Self {}
         }
 
         async fn teardown(&mut self) {
-            let mut checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap();
+            let mut checkpoint = TEARDOWN_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
         }
     }
 
-    #[tearup(TeardownPanicContext)]
+    #[tearup(NiceContext)]
     async fn teardown_panic() {}
 }

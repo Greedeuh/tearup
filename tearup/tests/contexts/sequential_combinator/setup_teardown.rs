@@ -2,7 +2,7 @@ use std::{sync::Mutex, time::Duration};
 use stopwatch::Stopwatch;
 
 use lazy_static::lazy_static;
-use tearup::{tearup, ConcurrentContextCombinator, SimpleContext};
+use tearup::{tearup, SequentialContextCombinator, SimpleContext};
 
 use crate::helper::assert_around_100ms;
 
@@ -12,10 +12,10 @@ lazy_static! {
 }
 
 #[test]
-fn it_is_concurrent() {
+fn it_pass_through_setup_then_teardown_of_both_contexts_one_after_the_other() {
     let stopwatch = Stopwatch::start_new();
 
-    concurrent();
+    sequential();
 
     assert!(FIRST_CHECKPOINT.lock().unwrap().unwrap());
     assert!(SECOND_CHECKPOINT.lock().unwrap().unwrap());
@@ -23,9 +23,9 @@ fn it_is_concurrent() {
     assert_around_100ms(&stopwatch);
 }
 
-type B = ConcurrentContextCombinator<FirstContext, SecondContext>;
+type B = SequentialContextCombinator<FirstContext, SecondContext>;
 #[tearup(B)]
-fn concurrent() {}
+fn sequential() {}
 
 pub struct FirstContext;
 impl SimpleContext for FirstContext {
@@ -33,7 +33,7 @@ impl SimpleContext for FirstContext {
         let mut checkpoint = FIRST_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(true);
 
-        std::thread::sleep(Duration::from_millis(100));
+        std::thread::sleep(Duration::from_millis(50));
 
         Self {}
     }
@@ -47,7 +47,7 @@ impl SimpleContext for SecondContext {
         let mut checkpoint = SECOND_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(true);
 
-        std::thread::sleep(Duration::from_millis(100));
+        std::thread::sleep(Duration::from_millis(50));
 
         Self {}
     }
@@ -60,7 +60,7 @@ mod asyncc {
     use stopwatch::Stopwatch;
 
     use lazy_static::lazy_static;
-    use tearup::{async_trait, tearup, AsyncConcurrentContextCombinator, AsyncSimpleContext};
+    use tearup::{async_trait, tearup, AsyncSequentialContextCombinator, AsyncSimpleContext};
     use tokio::{sync::Mutex, time::sleep};
 
     use crate::helper::assert_around_100ms;
@@ -71,10 +71,10 @@ mod asyncc {
     }
 
     #[tokio::test]
-    async fn it_is_concurrent() {
+    async fn it_pass_through_setup_then_teardown_of_both_contexts_one_after_the_other() {
         let stopwatch = Stopwatch::start_new();
 
-        concurrent().await;
+        sequential().await;
 
         assert!(FIRST_CHECKPOINT.lock().await.unwrap());
         assert!(SECOND_CHECKPOINT.lock().await.unwrap());
@@ -82,9 +82,9 @@ mod asyncc {
         assert_around_100ms(&stopwatch);
     }
 
-    type B = AsyncConcurrentContextCombinator<FirstContext, SecondContext>;
+    type B = AsyncSequentialContextCombinator<FirstContext, SecondContext>;
     #[tearup(B)]
-    async fn concurrent() {}
+    async fn sequential() {}
 
     pub struct FirstContext;
     #[async_trait]
@@ -93,7 +93,7 @@ mod asyncc {
             let mut checkpoint = FIRST_CHECKPOINT.lock().await;
             *checkpoint = Some(true);
 
-            sleep(Duration::from_millis(100)).await;
+            sleep(Duration::from_millis(50)).await;
 
             Self {}
         }
@@ -108,7 +108,7 @@ mod asyncc {
             let mut checkpoint = SECOND_CHECKPOINT.lock().await;
             *checkpoint = Some(true);
 
-            sleep(Duration::from_millis(100)).await;
+            sleep(Duration::from_millis(50)).await;
 
             Self {}
         }
