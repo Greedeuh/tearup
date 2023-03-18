@@ -1,10 +1,9 @@
-use crate::helper::TooSlowContext;
+use crate::helper::{assert_timeout_around_100ms, TooSlowContext};
 use tearup::tearup;
 
 #[test]
-#[should_panic]
 fn it_barely_timeout() {
-    setup_barely_timeout()
+    assert_timeout_around_100ms(setup_barely_timeout);
 }
 
 #[tearup(TooSlowContext)]
@@ -12,14 +11,16 @@ fn setup_barely_timeout() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use tearup::tearup;
+    use tearup::{tearup, FutureExt};
 
-    use crate::helper::AsyncTooSlowContext;
+    use crate::helper::{async_assert_timeout_around_100ms, AsyncTooSlowContext};
 
     #[tokio::test]
-    #[should_panic]
     async fn it_barely_timeout() {
-        setup_barely_timeout().await
+        async_assert_timeout_around_100ms(move || {
+            { async move { setup_barely_timeout().await } }.boxed()
+        })
+        .await;
     }
 
     #[tearup(AsyncTooSlowContext)]

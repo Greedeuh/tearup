@@ -7,10 +7,11 @@ use std::{
 };
 use tearup::{ready_when, tearup, ReadyChecksConfig, ReadyFn, WaitingContext};
 
+use crate::helper::assert_timeout_around_100ms;
+
 #[test]
-#[should_panic]
 fn it_barely_timeout_with_ready_when() {
-    setup_barely_timeout_with_ready_when()
+    assert_timeout_around_100ms(setup_barely_timeout_with_ready_when);
 }
 
 struct TooSlowReadyWhenContext;
@@ -50,10 +51,14 @@ mod asyncc {
     };
     use tokio::spawn;
 
+    use crate::helper::async_assert_timeout_around_100ms;
+
     #[tokio::test]
-    #[should_panic]
     async fn it_barely_timeout_with_ready_when() {
-        setup_barely_timeout_with_ready_when().await
+        async_assert_timeout_around_100ms(move || {
+            { async move { setup_barely_timeout_with_ready_when().await } }.boxed()
+        })
+        .await;
     }
 
     struct TooSlowReadyWhenContext;

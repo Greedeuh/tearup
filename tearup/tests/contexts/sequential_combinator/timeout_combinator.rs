@@ -1,47 +1,51 @@
-use crate::helper::{SlowContext, TooSlowContext};
+use crate::helper::{assert_timeout_around_100ms, InstantContext, TooSlowContext};
 use tearup::{tearup, SequentialContextCombinator};
 
 #[test]
-#[should_panic]
 fn it_barely_timeout_on_first() {
-    setup_barely_timeout_on_first();
+    assert_timeout_around_100ms(setup_barely_timeout_on_first);
 }
 
 #[test]
-#[should_panic]
 fn it_barely_timeout_on_second() {
-    setup_barely_timeout_on_second();
+    assert_timeout_around_100ms(setup_barely_timeout_on_second);
 }
 
-type A = SequentialContextCombinator<TooSlowContext, SlowContext>;
+type A = SequentialContextCombinator<TooSlowContext, InstantContext>;
 #[tearup(A)]
 fn setup_barely_timeout_on_first() {}
 
-type B = SequentialContextCombinator<SlowContext, TooSlowContext>;
+type B = SequentialContextCombinator<InstantContext, TooSlowContext>;
 #[tearup(B)]
 fn setup_barely_timeout_on_second() {}
 
 mod asyncc {
-    use crate::helper::{AsyncSlowContext, AsyncTooSlowContext};
-    use tearup::{tearup, AsyncSequentialContextCombinator};
+    use crate::helper::{
+        async_assert_timeout_around_100ms, AsyncInstantContext, AsyncTooSlowContext,
+    };
+    use tearup::{tearup, AsyncSequentialContextCombinator, FutureExt};
 
     #[tokio::test]
-    #[should_panic]
     async fn it_barely_timeout_on_first() {
-        setup_barely_timeout_on_first().await;
+        async_assert_timeout_around_100ms(move || {
+            { async move { setup_barely_timeout_on_first().await } }.boxed()
+        })
+        .await;
     }
 
     #[tokio::test]
-    #[should_panic]
     async fn it_barely_timeout_on_second() {
-        setup_barely_timeout_on_second().await;
+        async_assert_timeout_around_100ms(move || {
+            { async move { setup_barely_timeout_on_second().await } }.boxed()
+        })
+        .await;
     }
 
-    type A = AsyncSequentialContextCombinator<AsyncTooSlowContext, AsyncSlowContext>;
+    type A = AsyncSequentialContextCombinator<AsyncTooSlowContext, AsyncInstantContext>;
     #[tearup(A)]
     async fn setup_barely_timeout_on_first() {}
 
-    type B = AsyncSequentialContextCombinator<AsyncSlowContext, AsyncTooSlowContext>;
+    type B = AsyncSequentialContextCombinator<AsyncInstantContext, AsyncTooSlowContext>;
     #[tearup(B)]
     async fn setup_barely_timeout_on_second() {}
 }

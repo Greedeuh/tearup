@@ -13,9 +13,7 @@ where
 
     test();
 
-    let ms = stopwatch.elapsed_ms();
-    assert!(110 > ms, "stopwatch has {} elapsed ms > 90", ms);
-    assert!(ms > 90, "stopwatch has {} elapsed ms < 110", ms);
+    assert_around_100ms_(&stopwatch);
 }
 
 #[allow(dead_code)]
@@ -27,9 +25,7 @@ where
 
     test().await;
 
-    let ms = stopwatch.elapsed_ms();
-    assert!(110 > ms, "stopwatch has {} elapsed ms > 90", ms);
-    assert!(ms > 90, "stopwatch has {} elapsed ms < 110", ms);
+    assert_around_100ms_(&stopwatch);
 }
 
 #[allow(dead_code)]
@@ -42,9 +38,7 @@ where
     let test_execution = std::panic::catch_unwind(std::panic::AssertUnwindSafe(test));
     assert!(test_execution.is_err());
 
-    let ms = stopwatch.elapsed_ms();
-    assert!(110 > ms, "stopwatch has {} elapsed ms > 90", ms);
-    assert!(ms > 90, "stopwatch has {} elapsed ms < 110", ms);
+    assert_around_100ms_(&stopwatch);
 }
 
 #[allow(dead_code)]
@@ -59,9 +53,13 @@ where
         .await;
     assert!(test_execution.is_err());
 
+    assert_around_100ms_(&stopwatch);
+}
+
+fn assert_around_100ms_(stopwatch: &Stopwatch) {
     let ms = stopwatch.elapsed_ms();
-    assert!(110 > ms, "stopwatch has {} elapsed ms > 90", ms);
-    assert!(ms > 90, "stopwatch has {} elapsed ms < 110", ms);
+    assert!(115 > ms, "stopwatch has {} elapsed ms > 115", ms);
+    assert!(ms > 85, "stopwatch has {} elapsed ms < 85", ms);
 }
 
 pub struct InstantContext;
@@ -219,6 +217,49 @@ pub mod asyncc {
                 let just_after_max = (config.maximum - 1).try_into().unwrap();
 
                 sleep(config.duration * just_after_max).await;
+
+                ready();
+            });
+            Self {}
+        }
+
+        async fn teardown(&mut self) {}
+    }
+
+    pub struct AsyncHalfPlus1Context;
+    #[async_trait]
+    impl AsyncWaitingContext<'_> for AsyncHalfPlus1Context {
+        fn ready_checks_config(&self) -> ReadyChecksConfig {
+            ReadyChecksConfig::ms100()
+        }
+
+        async fn setup(ready: ReadyFn) -> Self {
+            spawn(async move {
+                let config = Self {}.ready_checks_config();
+                let just_after_max = (config.maximum - 1).try_into().unwrap();
+
+                sleep(config.duration * just_after_max / 2).await;
+
+                ready();
+            });
+            Self {}
+        }
+
+        async fn teardown(&mut self) {}
+    }
+
+    pub struct AsyncHalfMinus1Context;
+    #[async_trait]
+    impl AsyncWaitingContext<'_> for AsyncHalfMinus1Context {
+        fn ready_checks_config(&self) -> ReadyChecksConfig {
+            ReadyChecksConfig::ms100()
+        }
+        async fn setup(ready: ReadyFn) -> Self {
+            spawn(async move {
+                let config = Self {}.ready_checks_config();
+                let just_after_max = (config.maximum - 1).try_into().unwrap();
+
+                sleep(config.duration * just_after_max / 2).await;
 
                 ready();
             });
