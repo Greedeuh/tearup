@@ -1,7 +1,5 @@
-use std::{sync::Mutex, time::Duration};
-use stopwatch::Stopwatch;
-
 use lazy_static::lazy_static;
+use std::{sync::Mutex, time::Duration};
 use tearup::{tearup, ConcurrentContextCombinator, SimpleContext};
 
 use crate::helper::assert_around_100ms;
@@ -13,14 +11,10 @@ lazy_static! {
 
 #[test]
 fn it_pass_through_setup_then_teardown_of_both_contexts_concurrently() {
-    let stopwatch = Stopwatch::start_new();
-
-    concurrent();
+    assert_around_100ms(concurrent);
 
     assert!(FIRST_CHECKPOINT.lock().unwrap().unwrap());
     assert!(SECOND_CHECKPOINT.lock().unwrap().unwrap());
-
-    assert_around_100ms(&stopwatch);
 }
 
 type B = ConcurrentContextCombinator<FirstContext, SecondContext>;
@@ -56,14 +50,14 @@ impl SimpleContext for SecondContext {
 }
 
 mod asyncc {
-    use std::time::Duration;
-    use stopwatch::Stopwatch;
-
     use lazy_static::lazy_static;
-    use tearup::{async_trait, tearup, AsyncConcurrentContextCombinator, AsyncSimpleContext};
+    use std::time::Duration;
+    use tearup::{
+        async_trait, tearup, AsyncConcurrentContextCombinator, AsyncSimpleContext, FutureExt,
+    };
     use tokio::{sync::Mutex, time::sleep};
 
-    use crate::helper::assert_around_100ms;
+    use crate::helper::async_assert_around_100ms;
 
     lazy_static! {
         static ref FIRST_CHECKPOINT: Mutex<Option<bool>> = Some(false).into();
@@ -72,14 +66,10 @@ mod asyncc {
 
     #[tokio::test]
     async fn it_pass_through_setup_then_teardown_of_both_contexts_concurrently() {
-        let stopwatch = Stopwatch::start_new();
-
-        concurrent().await;
+        async_assert_around_100ms(move || { async move { concurrent().await } }.boxed()).await;
 
         assert!(FIRST_CHECKPOINT.lock().await.unwrap());
         assert!(SECOND_CHECKPOINT.lock().await.unwrap());
-
-        assert_around_100ms(&stopwatch);
     }
 
     type B = AsyncConcurrentContextCombinator<FirstContext, SecondContext>;

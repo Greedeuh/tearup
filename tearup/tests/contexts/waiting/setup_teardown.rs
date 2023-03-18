@@ -4,7 +4,6 @@ use std::{
     thread::{sleep, spawn},
     time::{Duration, SystemTime},
 };
-use stopwatch::Stopwatch;
 use tearup::{tearup, ReadyChecksConfig, ReadyFn, WaitingContext};
 
 use crate::helper::assert_around_100ms;
@@ -16,16 +15,12 @@ lazy_static! {
 
 #[test]
 fn it_pass_through_setup_then_teardown() {
-    let stopwatch = Stopwatch::start_new();
-
-    teardown_panic();
+    assert_around_100ms(setup_then_teardown);
 
     let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().unwrap().unwrap();
     let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap().unwrap();
 
     assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
-
-    assert_around_100ms(&stopwatch);
 }
 
 struct NiceContext;
@@ -55,18 +50,17 @@ impl WaitingContext for NiceContext {
 }
 
 #[tearup(NiceContext)]
-fn teardown_panic() {}
+fn setup_then_teardown() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
     use async_trait::async_trait;
     use lazy_static::lazy_static;
     use std::time::{Duration, SystemTime};
-    use stopwatch::Stopwatch;
-    use tearup::{tearup, AsyncWaitingContext, ReadyChecksConfig, ReadyFn};
+    use tearup::{tearup, AsyncWaitingContext, FutureExt, ReadyChecksConfig, ReadyFn};
     use tokio::{spawn, sync::Mutex, time::sleep};
 
-    use crate::helper::assert_around_100ms;
+    use crate::helper::async_assert_around_100ms;
 
     lazy_static! {
         static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
@@ -75,16 +69,13 @@ mod asyncc {
 
     #[tokio::test]
     async fn it_pass_through_setup_then_teardown() {
-        let stopwatch = Stopwatch::start_new();
-
-        teardown_panic().await;
+        async_assert_around_100ms(move || { async move { setup_then_teardown().await } }.boxed())
+            .await;
 
         let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().await.unwrap();
         let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().await.unwrap();
 
         assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
-
-        assert_around_100ms(&stopwatch);
     }
 
     struct NiceContext;
@@ -113,5 +104,5 @@ mod asyncc {
     }
 
     #[tearup(NiceContext)]
-    async fn teardown_panic() {}
+    async fn setup_then_teardown() {}
 }
