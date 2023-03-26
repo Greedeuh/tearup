@@ -77,7 +77,7 @@ impl FromAsyncContext<'_, YourContext> for SomethingYouSetup {
 
 // And write your tests !
 #[tearup_test(YourContext)]
-async fn is_should_do_that(mut something_you_need_in_test: SomethingYouSetup) {
+async fn it_should_do_that(mut something_you_need_in_test: SomethingYouSetup) {
     // assert something using something_you_need_in_test
 }
 ```
@@ -89,7 +89,7 @@ async fn is_should_do_that(mut something_you_need_in_test: SomethingYouSetup) {
 ```rust
 type BothContext = ConcurrentContextCombinator<YourContext, AnotherContext>;
 #[tearup_test(BothContext)]
-fn is_should_do_this(mut something_you_need_in_test: DbConnection, something_from_the_other_context: Address) {
+fn it_should_do_this(mut something_you_need_in_test: DbConnection, something_from_the_other_context: Address) {
     // assert something
 }
 ```
