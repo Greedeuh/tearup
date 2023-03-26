@@ -91,6 +91,29 @@ impl WaitingContext for SlowSetup {
     }
 }
 
+pub struct SlowTeardown;
+impl WaitingContext for SlowTeardown {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
+        ReadyChecksConfig::ms100()
+    }
+
+    fn setup(ready: ReadyFn) -> Self {
+        ready();
+        Self {}
+    }
+
+    fn teardown(&mut self, ready: ReadyFn) {
+        spawn(move || {
+            let config = Self {}.ready_checks_config();
+            let just_before_max = (config.maximum - 1).try_into().unwrap();
+
+            std::thread::sleep(config.duration * just_before_max);
+
+            ready()
+        });
+    }
+}
+
 pub struct HalfPlus1Setup;
 impl WaitingContext for HalfPlus1Setup {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
@@ -114,6 +137,29 @@ impl WaitingContext for HalfPlus1Setup {
     }
 }
 
+pub struct HalfPlus1Teardown;
+impl WaitingContext for HalfPlus1Teardown {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
+        ReadyChecksConfig::ms100()
+    }
+
+    fn setup(ready: ReadyFn) -> Self {
+        ready();
+        Self {}
+    }
+
+    fn teardown(&mut self, ready: ReadyFn) {
+        spawn(move || {
+            let config = Self {}.ready_checks_config();
+            let just_after_max = (config.maximum + 1).try_into().unwrap();
+
+            std::thread::sleep((config.duration * just_after_max) / 2);
+
+            ready()
+        });
+    }
+}
+
 pub struct HalfMinus1Setup;
 impl WaitingContext for HalfMinus1Setup {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
@@ -134,6 +180,29 @@ impl WaitingContext for HalfMinus1Setup {
 
     fn teardown(&mut self, ready: ReadyFn) {
         ready();
+    }
+}
+
+pub struct HalfMinus1Teardown;
+impl WaitingContext for HalfMinus1Teardown {
+    fn ready_checks_config(&self) -> ReadyChecksConfig {
+        ReadyChecksConfig::ms100()
+    }
+
+    fn setup(ready: ReadyFn) -> Self {
+        ready();
+        Self {}
+    }
+
+    fn teardown(&mut self, ready: ReadyFn) {
+        spawn(move || {
+            let config = Self {}.ready_checks_config();
+            let just_after_max = (config.maximum - 1).try_into().unwrap();
+
+            std::thread::sleep((config.duration * just_after_max) / 2);
+
+            ready()
+        });
     }
 }
 
@@ -229,6 +298,30 @@ pub mod asyncc {
 
         async fn teardown(&mut self, ready: ReadyFn) {
             ready();
+        }
+    }
+
+    pub struct AsyncSlowTeardown;
+    #[async_trait]
+    impl AsyncWaitingContext<'_> for AsyncSlowTeardown {
+        fn ready_checks_config(&self) -> ReadyChecksConfig {
+            ReadyChecksConfig::ms100()
+        }
+
+        async fn setup(ready: ReadyFn) -> Self {
+            ready();
+            Self {}
+        }
+
+        async fn teardown(&mut self, ready: ReadyFn) {
+            spawn(async move {
+                let config = Self {}.ready_checks_config();
+                let just_after_max = (config.maximum - 1).try_into().unwrap();
+
+                sleep(config.duration * just_after_max).await;
+
+                ready();
+            });
         }
     }
 
