@@ -23,7 +23,7 @@ impl WaitingContext for SimpleContextX {
         Self { db_client }
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(mut self, ready: ReadyFn) {
         self.db_client.drop_db();
         ready();
     }

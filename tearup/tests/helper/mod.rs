@@ -16,7 +16,7 @@ impl WaitingContext for InstantContext {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         ready();
     }
 }
@@ -39,7 +39,7 @@ impl WaitingContext for TooSlowSetup {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         ready();
     }
 }
@@ -55,7 +55,7 @@ impl WaitingContext for TooSlowTeardown {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         spawn(move || {
             let config = Self {}.ready_checks_config();
             let just_after_max = (config.maximum + 1).try_into().unwrap();
@@ -86,7 +86,7 @@ impl WaitingContext for SlowSetup {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         ready();
     }
 }
@@ -102,7 +102,7 @@ impl WaitingContext for SlowTeardown {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         spawn(move || {
             let config = Self {}.ready_checks_config();
             let just_before_max = (config.maximum - 1).try_into().unwrap();
@@ -132,7 +132,7 @@ impl WaitingContext for HalfPlus1Setup {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         ready();
     }
 }
@@ -148,7 +148,7 @@ impl WaitingContext for HalfPlus1Teardown {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         spawn(move || {
             let config = Self {}.ready_checks_config();
             let just_after_max = (config.maximum + 1).try_into().unwrap();
@@ -178,7 +178,7 @@ impl WaitingContext for HalfMinus1Setup {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         ready();
     }
 }
@@ -194,7 +194,7 @@ impl WaitingContext for HalfMinus1Teardown {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         spawn(move || {
             let config = Self {}.ready_checks_config();
             let just_after_max = (config.maximum - 1).try_into().unwrap();
@@ -224,7 +224,7 @@ pub mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self, ready: ReadyFn) {
+        async fn teardown(self, ready: ReadyFn) {
             ready()
         }
     }
@@ -248,7 +248,7 @@ pub mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self, ready: ReadyFn) {
+        async fn teardown(self, ready: ReadyFn) {
             ready();
         }
     }
@@ -265,7 +265,7 @@ pub mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self, ready: ReadyFn) {
+        async fn teardown(self, ready: ReadyFn) {
             spawn(async move {
                 let config = Self {}.ready_checks_config();
                 let just_after_max = (config.maximum + 1).try_into().unwrap();
@@ -296,7 +296,7 @@ pub mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self, ready: ReadyFn) {
+        async fn teardown(self, ready: ReadyFn) {
             ready();
         }
     }
@@ -313,7 +313,7 @@ pub mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self, ready: ReadyFn) {
+        async fn teardown(self, ready: ReadyFn) {
             spawn(async move {
                 let config = Self {}.ready_checks_config();
                 let just_after_max = (config.maximum - 1).try_into().unwrap();
@@ -344,7 +344,7 @@ pub mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self, ready: ReadyFn) {
+        async fn teardown(self, ready: ReadyFn) {
             ready();
         }
     }
@@ -367,7 +367,7 @@ pub mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self, ready: ReadyFn) {
+        async fn teardown(self, ready: ReadyFn) {
             ready();
         }
     }

@@ -53,7 +53,7 @@ impl<'a> AsyncContext<'a> for YourContext {
         Self { something_you_need_in_test: SomethingYouSetup{} }
     }
 
-    async fn teardown(&mut self) { /* --> clean your stuff here <-- */ }
+    async fn teardown(mut self) { /* --> clean your stuff here <-- */ }
 }
 
 // Optionnaly define some setup accessor

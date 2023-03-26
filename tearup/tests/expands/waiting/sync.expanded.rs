@@ -9,7 +9,7 @@ impl WaitingContext for CContext {
         ready();
         Self { db_name: DbName(db_name) }
     }
-    fn teardown(&mut self) {
+    fn teardown(mut self) {
         if "drop db: " != &self.db_name.0 {}
     }
 }

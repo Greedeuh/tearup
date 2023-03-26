@@ -24,7 +24,7 @@ impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
 
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
-    fn teardown(&mut self) {
+    fn teardown(self) {
         self.context1.launch_teardown();
         self.context2.launch_teardown();
     }
@@ -61,7 +61,7 @@ mod asyncc {
 
         /// Will be executed before the test execution even if the test has panicked
         /// You should do your clean up here.
-        async fn teardown(&mut self) {
+        async fn teardown(mut self) {
             self.context1.teardown().await;
             self.context2.teardown().await;
         }

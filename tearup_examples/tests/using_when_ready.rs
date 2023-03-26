@@ -25,7 +25,7 @@ impl AsyncWaitingContext<'_> for AsyncReadyWhenContext {
         Self {}
     }
 
-    async fn teardown(&mut self, ready: ReadyFn) {
+    async fn teardown(mut self, ready: ReadyFn) {
         ready();
     }
 }
@@ -52,7 +52,7 @@ impl WaitingContext for SyncReadyWhenContext {
         Self {}
     }
 
-    fn teardown(&mut self, ready: ReadyFn) {
+    fn teardown(self, ready: ReadyFn) {
         ready();
     }
 }

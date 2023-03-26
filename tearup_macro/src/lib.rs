@@ -29,7 +29,7 @@ pub fn tearup(attr: TokenStream, input: TokenStream) -> TokenStream {
 ///         Self { something_you_need_in_test: SomethingYouSetup{} }
 ///     }
 ///
-///     async fn teardown(&mut self, ready: ReadyFn) {
+///     async fn teardown(mut self, ready: ReadyFn) {
 ///         /* do your stuff... */
 ///         ready(); // notify that your setup id ready
 ///     }

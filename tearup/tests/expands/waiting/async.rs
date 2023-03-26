@@ -17,7 +17,7 @@ impl<'a> AsyncWaitingContext<'a> for CContext {
             db_name: DbName(db_name),
         }
     }
-    async fn teardown(&mut self) {
+    async fn teardown(mut self) {
         if "drop db: " != &self.db_name.0 {};
     }
 }

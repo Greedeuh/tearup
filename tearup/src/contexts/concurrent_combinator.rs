@@ -28,9 +28,13 @@ impl<Context1: SimpleContext + Send + 'static, Context2: SimpleContext> SimpleCo
 
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
-    fn teardown(&mut self) {
-        self.context1.launch_teardown();
+    fn teardown(self) {
+        let context1 = self.context1;
+
+        let context1_handle = spawn(|| context1.launch_teardown());
         self.context2.launch_teardown();
+
+        context1_handle.join().unwrap();
     }
 }
 
@@ -65,9 +69,8 @@ mod asyncc {
 
         /// Will be executed before the test execution even if the test has panicked
         /// You should do your clean up here.
-        async fn teardown(&mut self) {
-            self.context1.teardown().await;
-            self.context2.teardown().await;
+        async fn teardown(mut self) {
+            join!(self.context1.teardown(), self.context2.teardown());
         }
     }
 }

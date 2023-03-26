@@ -16,7 +16,7 @@ pub trait SimpleContext: Sized {
 
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
-    fn teardown(&mut self);
+    fn teardown(self);
 
     fn launch_setup() -> Self {
         Self::setup()
@@ -30,7 +30,7 @@ pub trait SimpleContext: Sized {
         launch_test(test)
     }
 
-    fn launch_teardown(&mut self) {
+    fn launch_teardown(self) {
         self.teardown();
     }
 }
@@ -57,7 +57,7 @@ mod asyncc {
 
         /// Will be executed before the test execution even if the test has panicked
         /// You should do your clean up here.
-        async fn teardown(&mut self);
+        async fn teardown(mut self);
 
         async fn launch_setup() -> Self
         where
@@ -74,7 +74,7 @@ mod asyncc {
             async_launch_test(test).await
         }
 
-        async fn launch_teardown(&mut self) {
+        async fn launch_teardown(mut self) {
             self.teardown().await;
         }
     }

@@ -35,7 +35,7 @@ impl SimpleContext for FirstContext {
         Self {}
     }
 
-    fn teardown(&mut self) {
+    fn teardown(self) {
         let mut checkpoint = FIRST_TEARDOWN_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
     }
@@ -52,7 +52,7 @@ impl SimpleContext for SecondContext {
         Self {}
     }
 
-    fn teardown(&mut self) {
+    fn teardown(self) {
         let mut checkpoint = SECOND_TEARDOWN_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
     }
@@ -100,7 +100,7 @@ mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self) {
+        async fn teardown(mut self) {
             let mut checkpoint = FIRST_TEARDOWN_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
         }
@@ -118,7 +118,7 @@ mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self) {
+        async fn teardown(mut self) {
             let mut checkpoint = SECOND_TEARDOWN_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
         }

@@ -30,7 +30,7 @@ impl SimpleContext for NiceContext {
         Self {}
     }
 
-    fn teardown(&mut self) {
+    fn teardown(self) {
         let mut checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
     }
@@ -73,7 +73,7 @@ mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self) {
+        async fn teardown(mut self) {
             let mut checkpoint = TEARDOWN_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
         }
