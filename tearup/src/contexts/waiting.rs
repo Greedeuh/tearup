@@ -19,7 +19,7 @@ pub trait WaitingContext: Sized {
 
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
-    fn teardown(&mut self);
+    fn teardown(&mut self, ready: ReadyFn);
 
     /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
     /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
@@ -40,7 +40,9 @@ impl<T: WaitingContext> SimpleContext for T {
     }
 
     fn teardown(&mut self) {
-        self.teardown();
+        let (ready_flag, ready) = ready_state();
+        self.teardown(ready);
+        wait_setup(self.ready_checks_config(), ready_flag);
     }
 }
 
@@ -80,7 +82,7 @@ mod asyncc {
 
         /// Will be executed before the test execution even if the test has panicked
         /// You should do your clean up here.
-        async fn teardown(&mut self);
+        async fn teardown(&mut self, ready: ReadyFn);
 
         /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
         /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
@@ -102,7 +104,9 @@ mod asyncc {
         }
 
         async fn teardown(&mut self) {
-            self.teardown().await;
+            let (ready_flag, ready) = ready_state();
+            self.teardown(ready).await;
+            wait_setup(self.ready_checks_config(), ready_flag).await;
         }
     }
 

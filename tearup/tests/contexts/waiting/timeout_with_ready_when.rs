@@ -33,7 +33,9 @@ impl WaitingContext for TooSlowReadyWhenContext {
         Self {}
     }
 
-    fn teardown(&mut self) {}
+    fn teardown(&mut self, ready: ReadyFn) {
+        ready();
+    }
 }
 
 #[tearup(TooSlowReadyWhenContext)]
@@ -88,7 +90,9 @@ mod asyncc {
             Self {}
         }
 
-        async fn teardown(&mut self) {}
+        async fn teardown(&mut self, ready: ReadyFn) {
+            ready();
+        }
     }
 
     #[tearup(TooSlowReadyWhenContext)]

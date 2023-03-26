@@ -28,8 +28,9 @@ impl<'a> AsyncWaitingContext<'a> for SimpleContext {
         Self { db_client }
     }
 
-    async fn teardown(&mut self) {
+    async fn teardown(&mut self, ready: ReadyFn) {
         self.db_client.drop_db().await;
+        ready();
     }
 }
 

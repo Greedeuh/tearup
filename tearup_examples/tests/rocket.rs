@@ -35,8 +35,9 @@ impl<'a> AsyncWaitingContext<'a> for RocketContext {
         Self { _srv_life, port }
     }
 
-    async fn teardown(&mut self) {
+    async fn teardown(&mut self, ready: ReadyFn) {
         free_port(self.port).await;
+        ready();
     }
 }
 

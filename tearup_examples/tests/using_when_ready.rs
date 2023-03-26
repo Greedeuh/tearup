@@ -25,7 +25,9 @@ impl AsyncWaitingContext<'_> for AsyncReadyWhenContext {
         Self {}
     }
 
-    async fn teardown(&mut self) {}
+    async fn teardown(&mut self, ready: ReadyFn) {
+        ready();
+    }
 }
 
 fn launch_server() {}
@@ -50,7 +52,9 @@ impl WaitingContext for SyncReadyWhenContext {
         Self {}
     }
 
-    fn teardown(&mut self) {}
+    fn teardown(&mut self, ready: ReadyFn) {
+        ready();
+    }
 }
 
 fn sync_ping_server() -> Result<(), ()> {
