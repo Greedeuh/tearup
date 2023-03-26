@@ -35,7 +35,7 @@ where
 }
 
 #[cfg(feature = "async")]
-async fn async_launch_test<'a, TestFn>(test: TestFn) -> Result<(), Box<dyn Any + Send>>
+pub(crate) async fn async_launch_test<'a, TestFn>(test: TestFn) -> Result<(), Box<dyn Any + Send>>
 where
     TestFn: FnOnce() -> BoxFuture<'a, ()> + Send,
 {

@@ -1,26 +1,21 @@
 use lazy_static::lazy_static;
 use std::{
-    sync::Mutex,
     thread::{sleep, spawn},
     time::{Duration, SystemTime},
 };
 use tearup::{tearup, ReadyChecksConfig, ReadyFn, WaitingContext};
 
-use crate::helper::assert_around_100ms;
+use crate::helper::{assert_around_100ms, assert_order, Checkpoint};
 
 lazy_static! {
-    static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-    static ref TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+    static ref SETUP_CHECKPOINT: Checkpoint = None.into();
+    static ref TEARDOWN_CHECKPOINT: Checkpoint = None.into();
 }
 
 #[test]
 fn it_pass_through_setup_then_teardown() {
     assert_around_100ms(setup_then_teardown);
-
-    let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().unwrap().unwrap();
-    let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap().unwrap();
-
-    assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
+    assert_order(&SETUP_CHECKPOINT, &TEARDOWN_CHECKPOINT);
 }
 
 struct NiceContext;
@@ -58,13 +53,13 @@ mod asyncc {
     use lazy_static::lazy_static;
     use std::time::{Duration, SystemTime};
     use tearup::{tearup, AsyncWaitingContext, FutureExt, ReadyChecksConfig, ReadyFn};
-    use tokio::{spawn, sync::Mutex, time::sleep};
+    use tokio::{spawn, time::sleep};
 
-    use crate::helper::async_assert_around_100ms;
+    use crate::helper::{assert_async_order, async_assert_around_100ms, AsyncCheckpoint};
 
     lazy_static! {
-        static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-        static ref TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+        static ref SETUP_CHECKPOINT: AsyncCheckpoint = None.into();
+        static ref TEARDOWN_CHECKPOINT: AsyncCheckpoint = None.into();
     }
 
     #[tokio::test]
@@ -72,10 +67,7 @@ mod asyncc {
         async_assert_around_100ms(move || { async move { setup_then_teardown().await } }.boxed())
             .await;
 
-        let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().await.unwrap();
-        let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().await.unwrap();
-
-        assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
+        assert_async_order(&SETUP_CHECKPOINT, &TEARDOWN_CHECKPOINT).await;
     }
 
     struct NiceContext;

@@ -1,31 +1,23 @@
 use lazy_static::lazy_static;
-use std::{
-    sync::Mutex,
-    time::{Duration, SystemTime},
-};
+use std::time::{Duration, SystemTime};
 use tearup::{tearup, ConcurrentContextCombinator, SimpleContext};
 
-use crate::helper::assert_around_100ms;
+use crate::helper::{assert_around_100ms, assert_order, Checkpoint};
 
 lazy_static! {
-    static ref FIRST_SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-    static ref FIRST_TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-    static ref SECOND_SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-    static ref SECOND_TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+    static ref FIRST_SETUP_CHECKPOINT: Checkpoint = None.into();
+    static ref FIRST_TEARDOWN_CHECKPOINT: Checkpoint = None.into();
+    static ref SECOND_SETUP_CHECKPOINT: Checkpoint = None.into();
+    static ref SECOND_TEARDOWN_CHECKPOINT: Checkpoint = None.into();
 }
 
 #[test]
 fn it_pass_through_setup_then_teardown_of_both_contexts_concurrently() {
     assert_around_100ms(concurrent);
 
-    assert!(
-        FIRST_SETUP_CHECKPOINT.lock().unwrap().unwrap()
-            < FIRST_TEARDOWN_CHECKPOINT.lock().unwrap().unwrap()
-    );
-    assert!(
-        SECOND_SETUP_CHECKPOINT.lock().unwrap().unwrap()
-            < SECOND_TEARDOWN_CHECKPOINT.lock().unwrap().unwrap()
-    );
+    assert_order(&FIRST_SETUP_CHECKPOINT, &FIRST_TEARDOWN_CHECKPOINT);
+    assert_order(&SECOND_SETUP_CHECKPOINT, &SECOND_TEARDOWN_CHECKPOINT);
+    assert_order(&SECOND_SETUP_CHECKPOINT, &FIRST_TEARDOWN_CHECKPOINT);
 }
 
 type B = ConcurrentContextCombinator<FirstContext, SecondContext>;
@@ -72,29 +64,24 @@ mod asyncc {
     use tearup::{
         async_trait, tearup, AsyncConcurrentContextCombinator, AsyncSimpleContext, FutureExt,
     };
-    use tokio::{sync::Mutex, time::sleep};
+    use tokio::time::sleep;
 
-    use crate::helper::async_assert_around_100ms;
+    use crate::helper::{assert_async_order, async_assert_around_100ms, AsyncCheckpoint};
 
     lazy_static! {
-        static ref FIRST_SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-        static ref FIRST_TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-        static ref SECOND_SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-        static ref SECOND_TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+        static ref FIRST_SETUP_CHECKPOINT: AsyncCheckpoint = None.into();
+        static ref FIRST_TEARDOWN_CHECKPOINT: AsyncCheckpoint = None.into();
+        static ref SECOND_SETUP_CHECKPOINT: AsyncCheckpoint = None.into();
+        static ref SECOND_TEARDOWN_CHECKPOINT: AsyncCheckpoint = None.into();
     }
 
     #[tokio::test]
     async fn it_pass_through_setup_then_teardown_of_both_contexts_concurrently() {
         async_assert_around_100ms(move || { async move { concurrent().await } }.boxed()).await;
 
-        assert!(
-            FIRST_SETUP_CHECKPOINT.lock().await.unwrap()
-                < FIRST_TEARDOWN_CHECKPOINT.lock().await.unwrap()
-        );
-        assert!(
-            SECOND_SETUP_CHECKPOINT.lock().await.unwrap()
-                < SECOND_TEARDOWN_CHECKPOINT.lock().await.unwrap()
-        );
+        assert_async_order(&FIRST_SETUP_CHECKPOINT, &FIRST_TEARDOWN_CHECKPOINT).await;
+        assert_async_order(&SECOND_SETUP_CHECKPOINT, &SECOND_TEARDOWN_CHECKPOINT).await;
+        assert_async_order(&SECOND_SETUP_CHECKPOINT, &FIRST_TEARDOWN_CHECKPOINT).await;
     }
 
     type B = AsyncConcurrentContextCombinator<FirstContext, SecondContext>;

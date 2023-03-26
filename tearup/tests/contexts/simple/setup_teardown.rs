@@ -1,24 +1,22 @@
 use lazy_static::lazy_static;
 use std::{
-    sync::Mutex,
     thread::sleep,
     time::{Duration, SystemTime},
 };
 use tearup::{tearup, SimpleContext};
 
+use crate::helper::{assert_order, Checkpoint};
+
 lazy_static! {
-    static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-    static ref TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+    static ref SETUP_CHECKPOINT: Checkpoint = None.into();
+    static ref TEARDOWN_CHECKPOINT: Checkpoint = None.into();
 }
 
 #[test]
 fn it_pass_through_setup_then_teardown() {
     teardown_panic();
 
-    let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().unwrap().unwrap();
-    let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().unwrap().unwrap();
-
-    assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
+    assert_order(&SETUP_CHECKPOINT, &TEARDOWN_CHECKPOINT);
 }
 
 struct NiceContext;
@@ -47,21 +45,20 @@ mod asyncc {
     use lazy_static::lazy_static;
     use std::time::{Duration, SystemTime};
     use tearup::{tearup, AsyncSimpleContext};
-    use tokio::{sync::Mutex, time::sleep};
+    use tokio::time::sleep;
+
+    use crate::helper::{assert_async_order, AsyncCheckpoint};
 
     lazy_static! {
-        static ref SETUP_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
-        static ref TEARDOWN_CHECKPOINT: Mutex<Option<SystemTime>> = None.into();
+        static ref SETUP_CHECKPOINT: AsyncCheckpoint = None.into();
+        static ref TEARDOWN_CHECKPOINT: AsyncCheckpoint = None.into();
     }
 
     #[tokio::test]
     async fn it_pass_through_setup_then_teardown() {
         teardown_panic().await;
 
-        let raw_setup_checkpoint = SETUP_CHECKPOINT.lock().await.unwrap();
-        let raw_teardown_checkpoint = TEARDOWN_CHECKPOINT.lock().await.unwrap();
-
-        assert!(raw_setup_checkpoint < raw_teardown_checkpoint);
+        assert_async_order(&SETUP_CHECKPOINT, &TEARDOWN_CHECKPOINT).await;
     }
 
     struct NiceContext;

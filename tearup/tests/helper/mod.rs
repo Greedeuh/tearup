@@ -1,8 +1,22 @@
 pub use asyncc::*;
 use futures::future::BoxFuture;
-use std::thread::spawn;
+use std::{sync::Mutex, thread::spawn, time::SystemTime};
 use stopwatch::Stopwatch;
 use tearup::{FutureExt, ReadyChecksConfig, ReadyFn, WaitingContext};
+
+pub type Checkpoint = Mutex<Option<SystemTime>>;
+pub type AsyncCheckpoint = tokio::sync::Mutex<Option<SystemTime>>;
+
+pub fn assert_order(checkpoint_before: &Checkpoint, checkpoint_after: &Checkpoint) {
+    assert!(checkpoint_before.lock().unwrap().unwrap() < checkpoint_after.lock().unwrap().unwrap());
+}
+
+pub async fn assert_async_order(
+    checkpoint_before: &AsyncCheckpoint,
+    checkpoint_after: &AsyncCheckpoint,
+) {
+    assert!(checkpoint_before.lock().await.unwrap() < checkpoint_after.lock().await.unwrap());
+}
 
 #[allow(dead_code)]
 pub fn assert_around_100ms<TestFn>(test: TestFn)
