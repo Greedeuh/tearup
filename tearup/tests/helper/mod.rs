@@ -21,8 +21,8 @@ impl WaitingContext for InstantContext {
     }
 }
 
-pub struct TooSlowContext;
-impl WaitingContext for TooSlowContext {
+pub struct TooSlowSetup;
+impl WaitingContext for TooSlowSetup {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -67,8 +67,8 @@ impl WaitingContext for TooSlowTeardown {
     }
 }
 
-pub struct SlowContext;
-impl WaitingContext for SlowContext {
+pub struct SlowSetup;
+impl WaitingContext for SlowSetup {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -91,8 +91,8 @@ impl WaitingContext for SlowContext {
     }
 }
 
-pub struct HalfPlus1Context;
-impl WaitingContext for HalfPlus1Context {
+pub struct HalfPlus1Setup;
+impl WaitingContext for HalfPlus1Setup {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -114,8 +114,8 @@ impl WaitingContext for HalfPlus1Context {
     }
 }
 
-pub struct HalfMinus1Context;
-impl WaitingContext for HalfMinus1Context {
+pub struct HalfMinus1Setup;
+impl WaitingContext for HalfMinus1Setup {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms100()
     }
@@ -160,9 +160,9 @@ pub mod asyncc {
         }
     }
 
-    pub struct AsyncTooSlowContext;
+    pub struct AsyncTooSlowSetup;
     #[async_trait]
-    impl AsyncWaitingContext<'_> for AsyncTooSlowContext {
+    impl AsyncWaitingContext<'_> for AsyncTooSlowSetup {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
@@ -208,9 +208,9 @@ pub mod asyncc {
         }
     }
 
-    pub struct AsyncSlowContext;
+    pub struct AsyncSlowSetup;
     #[async_trait]
-    impl AsyncWaitingContext<'_> for AsyncSlowContext {
+    impl AsyncWaitingContext<'_> for AsyncSlowSetup {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
@@ -232,9 +232,9 @@ pub mod asyncc {
         }
     }
 
-    pub struct AsyncHalfPlus1Context;
+    pub struct AsyncHalfPlus1Setup;
     #[async_trait]
-    impl AsyncWaitingContext<'_> for AsyncHalfPlus1Context {
+    impl AsyncWaitingContext<'_> for AsyncHalfPlus1Setup {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }
@@ -256,9 +256,9 @@ pub mod asyncc {
         }
     }
 
-    pub struct AsyncHalfMinus1Context;
+    pub struct AsyncHalfMinus1Setup;
     #[async_trait]
-    impl AsyncWaitingContext<'_> for AsyncHalfMinus1Context {
+    impl AsyncWaitingContext<'_> for AsyncHalfMinus1Setup {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms100()
         }

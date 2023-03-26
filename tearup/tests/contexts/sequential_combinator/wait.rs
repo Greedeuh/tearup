@@ -1,4 +1,4 @@
-use crate::helper::{assert_around_100ms, HalfMinus1Context};
+use crate::helper::{assert_around_100ms, HalfMinus1Setup};
 use tearup::{tearup, SequentialContextCombinator};
 
 #[test]
@@ -6,14 +6,14 @@ fn it_almost_timeout() {
     assert_around_100ms(setup_almost_timeout);
 }
 
-type A = SequentialContextCombinator<HalfMinus1Context, HalfMinus1Context>;
+type A = SequentialContextCombinator<HalfMinus1Setup, HalfMinus1Setup>;
 #[tearup(A)]
 fn setup_almost_timeout() {}
 
 mod asyncc {
     use tearup::{tearup, AsyncSequentialContextCombinator, FutureExt};
 
-    use crate::helper::{async_assert_around_100ms, AsyncHalfMinus1Context};
+    use crate::helper::{async_assert_around_100ms, AsyncHalfMinus1Setup};
 
     #[tokio::test]
     async fn it_almost_timeout() {
@@ -21,7 +21,7 @@ mod asyncc {
             .await;
     }
 
-    type A = AsyncSequentialContextCombinator<AsyncHalfMinus1Context, AsyncHalfMinus1Context>;
+    type A = AsyncSequentialContextCombinator<AsyncHalfMinus1Setup, AsyncHalfMinus1Setup>;
     #[tearup(A)]
     async fn setup_almost_timeout() {}
 }

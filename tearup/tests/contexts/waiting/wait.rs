@@ -1,4 +1,4 @@
-use crate::helper::{assert_around_100ms, SlowContext};
+use crate::helper::{assert_around_100ms, SlowSetup};
 use tearup::tearup;
 
 #[test]
@@ -6,14 +6,14 @@ fn it_almost_timeout() {
     assert_around_100ms(setup_almost_timeout);
 }
 
-#[tearup(SlowContext)]
+#[tearup(SlowSetup)]
 fn setup_almost_timeout() {}
 
 #[cfg(feature = "async")]
 mod asyncc {
     use tearup::{tearup, FutureExt};
 
-    use crate::helper::{async_assert_around_100ms, AsyncSlowContext};
+    use crate::helper::{async_assert_around_100ms, AsyncSlowSetup};
 
     #[tokio::test]
     async fn it_almost_timeout() {
@@ -21,6 +21,6 @@ mod asyncc {
             .await;
     }
 
-    #[tearup(AsyncSlowContext)]
+    #[tearup(AsyncSlowSetup)]
     async fn setup_almost_timeout() {}
 }
