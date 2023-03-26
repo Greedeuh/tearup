@@ -1,7 +1,7 @@
 use async_trait::async_trait;
-use tearup::{tearup_test, AsyncWaitingContext, FromAsyncContext, ReadyFn};
+use tearup::{tearup_test, AsyncSimpleContext, FromAsyncContext};
 
-#[tearup_test(SimpleContext)]
+#[tearup_test(DbContext)]
 async fn it_setup_a_fake_db(mut db: DbClient) {
     db.execute("some action with a side effect on DB").await;
     assert_eq!(
@@ -10,27 +10,29 @@ async fn it_setup_a_fake_db(mut db: DbClient) {
     );
 }
 
-struct SimpleContext {
+struct DbContext {
     db_client: DbClient,
 }
 
 #[async_trait]
-impl<'a> AsyncWaitingContext<'a> for SimpleContext {
-    async fn setup(ready: ReadyFn) -> Self {
-        let mut db_client = DbClient {
-            name: "random_db_name".to_string(),
-        };
+impl<'a> AsyncSimpleContext<'a> for DbContext {
+    async fn setup() -> Self {
+        let mut db_client = DbClient::new("random_db_name");
 
         db_client.create_db().await;
-
-        ready();
 
         Self { db_client }
     }
 
-    async fn teardown(mut self, ready: ReadyFn) {
+    async fn teardown(mut self) {
         self.db_client.drop_db().await;
-        ready();
+    }
+}
+
+#[async_trait]
+impl FromAsyncContext<'_, DbContext> for DbClient {
+    async fn from_context(context: &DbContext) -> Self {
+        context.db_client.clone()
     }
 }
 
@@ -41,17 +43,15 @@ pub struct DbClient {
 }
 
 impl DbClient {
+    pub fn new(db_name: &str) -> Self {
+        DbClient {
+            name: db_name.to_string(),
+        }
+    }
     pub async fn create_db(&mut self) {}
     pub async fn drop_db(&mut self) {}
     pub async fn execute(&mut self, _query: &str) {}
     pub async fn query(&mut self, _query: &str) -> String {
         "some res".to_string()
-    }
-}
-
-#[async_trait]
-impl FromAsyncContext<'_, SimpleContext> for DbClient {
-    async fn from_context(context: &SimpleContext) -> Self {
-        context.db_client.clone()
     }
 }

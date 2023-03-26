@@ -1,4 +1,4 @@
-use tearup::{tearup_test, FromContext, ReadyFn, WaitingContext};
+use tearup::{tearup_test, FromContext, SimpleContext};
 
 #[tearup_test(SimpleContextX)]
 fn it_setup_a_fake_db(mut db: DbClient) {
@@ -10,22 +10,17 @@ struct SimpleContextX {
     db_client: DbClient,
 }
 
-impl WaitingContext for SimpleContextX {
-    fn setup(ready: ReadyFn) -> Self {
-        let mut db_client = DbClient {
-            name: "random_db_name".to_string(),
-        };
+impl SimpleContext for SimpleContextX {
+    fn setup() -> Self {
+        let mut db_client = DbClient::new("random_db_name");
 
         db_client.create_db();
-
-        ready();
 
         Self { db_client }
     }
 
-    fn teardown(mut self, ready: ReadyFn) {
+    fn teardown(mut self) {
         self.db_client.drop_db();
-        ready();
     }
 }
 
@@ -36,6 +31,11 @@ pub struct DbClient {
 }
 
 impl DbClient {
+    pub fn new(db_name: &str) -> Self {
+        DbClient {
+            name: db_name.to_string(),
+        }
+    }
     pub fn create_db(&mut self) {}
     pub fn drop_db(&mut self) {}
     pub fn execute(&mut self, _query: &str) {}
