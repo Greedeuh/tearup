@@ -23,18 +23,18 @@ Your test will look like this:
 
 ```rust
 #[tearup_test(DbContext)]
-async fn is_should_do_that(mut db: DbConnection) {
+async fn it_should_do_that(mut db: DbConnection) {
     // assert something
 }
 
 #[tearup_test(WebContext)]
-fn is_should_do_this(address: Address) {
+fn it_should_do_this(address: Address) {
     // assert something
 }
 
 type BothContext = ConcurrentContextCombinator<DbContext, AnotherContext>;
 #[tearup_test(BothContext)]
-fn is_should_do_this(mut db: DbConnection, address: Address) {
+fn it_should_do_this(mut db: DbConnection, address: Address) {
     // assert something
 }
 ```
