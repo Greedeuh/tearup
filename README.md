@@ -12,8 +12,10 @@ Basically:
 
 Add the following to your `Cargo.toml`
 
-    [dependencies]
-    tearup = "0.1"
+```yaml
+[dependencies]
+tearup = "0.1"
+```
 
 ## Usage
 
