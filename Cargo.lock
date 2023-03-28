@@ -1551,6 +1551,20 @@ dependencies = [
 
 [[package]]
 name = "tearup"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "167b2da83d87adf34a5b8b9ad8c30cbf837e6910d6d1bc25efc133fecb9c4aee"
+dependencies = [
+ "async-trait",
+ "futures",
+ "macrotest",
+ "tearup_macro 0.1.0",
+ "tokio",
+ "trybuild",
+]
+
+[[package]]
+name = "tearup"
 version = "0.2.0"
 dependencies = [
  "async-trait",
@@ -1558,7 +1572,7 @@ dependencies = [
  "lazy_static",
  "macrotest",
  "stopwatch",
- "tearup_macro",
+ "tearup_macro 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio",
 ]
 
@@ -1570,8 +1584,19 @@ dependencies = [
  "lazy_static",
  "reqwest",
  "rocket",
- "tearup",
+ "tearup 0.2.0",
  "tokio",
+]
+
+[[package]]
+name = "tearup_macro"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "574f844ed20ec1f6637b5aa4ad70ddcd75854015863ab13d3e1b8ba268272719"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1583,9 +1608,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "tearup",
+ "tearup 0.1.0",
  "tokio",
  "trybuild",
+]
+
+[[package]]
+name = "tearup_macro"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46e34ab467a57ae31447a99c7875a67dea68e150a8fbd250556e23b74863d67b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

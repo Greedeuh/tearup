@@ -14,7 +14,7 @@ Add the following to your `Cargo.toml`
 
 ```yaml
 [dependencies]
-tearup = "0.1"
+tearup = "0.2"
 ```
 
 ## Usage
