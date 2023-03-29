@@ -28,6 +28,14 @@ impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
         self.context1.launch_teardown();
         self.context2.launch_teardown();
     }
+
+    fn take<T: 'static>(&mut self) -> T {
+        self.context1
+            .public_context()
+            .remove()
+            .or(self.context2.public_context().remove())
+            .unwrap()
+    }
 }
 
 #[cfg(feature = "async")]

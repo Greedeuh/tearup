@@ -1,3 +1,4 @@
+use anymap::AnyMap;
 #[cfg(feature = "async")]
 pub use asyncc::*;
 use std::{
@@ -26,6 +27,10 @@ pub trait WaitingContext: Sized {
     fn ready_checks_config(&self) -> ReadyChecksConfig {
         ReadyChecksConfig::ms500()
     }
+
+    fn public_context(&mut self) -> AnyMap {
+        todo!()
+    }
 }
 
 impl<T: WaitingContext> SimpleContext for T {
@@ -45,6 +50,10 @@ impl<T: WaitingContext> SimpleContext for T {
         self.teardown(ready);
         wait_setup(conf, ready_flag);
     }
+
+    fn public_context(&mut self) -> AnyMap {
+        self.public_context()
+    }
 }
 
 fn wait_setup(ready_checks: ReadyChecksConfig, ready: Arc<Mutex<bool>>) {
@@ -63,6 +72,7 @@ fn wait_setup(ready_checks: ReadyChecksConfig, ready: Arc<Mutex<bool>>) {
 
 #[cfg(feature = "async")]
 mod asyncc {
+    use anymap::AnyMap;
     use async_trait::async_trait;
     pub use futures::future::FutureExt;
     use std::sync::{Arc, Mutex};
@@ -90,6 +100,10 @@ mod asyncc {
         fn ready_checks_config(&self) -> ReadyChecksConfig {
             ReadyChecksConfig::ms500()
         }
+
+        fn public_context(&mut self) -> AnyMap {
+            AnyMap::new()
+        }
     }
 
     #[async_trait]
@@ -109,6 +123,10 @@ mod asyncc {
             let (ready_flag, ready) = ready_state();
             self.teardown(ready).await;
             wait_setup(config, ready_flag).await;
+        }
+
+        fn public_context(&mut self) -> AnyMap {
+            self.public_context()
         }
     }
 

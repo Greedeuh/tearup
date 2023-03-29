@@ -29,7 +29,7 @@ impl FromContext<CContext> for DbName {
 fn test_with_db_setup_and_teardown() {
     use tearup::{SimpleContext, WaitingContext};
     let mut context = CContext::launch_setup();
-    let db_name = <DbName as tearup::FromContext<CContext>>::from_context(&context);
+    let db_name: DbName = context.take();
     let text_execution = context
         .launch_test(move || {
             if "db_name" == &db_name.0 {}

@@ -1,4 +1,4 @@
-use tearup::{tearup_test, FromContext, SimpleContext};
+use tearup::{tearup_test, AnyMap, SimpleContext};
 
 #[tearup_test(SimpleContextX)]
 fn it_setup_a_fake_db(mut db: DbClient) {
@@ -17,6 +17,12 @@ impl SimpleContext for SimpleContextX {
         db_client.create_db();
 
         Self { db_client }
+    }
+
+    fn public_context(&mut self) -> AnyMap {
+        let mut map = AnyMap::new();
+        map.insert(self.db_client.clone());
+        map
     }
 
     fn teardown(mut self) {
@@ -41,11 +47,5 @@ impl DbClient {
     pub fn execute(&mut self, _query: &str) {}
     pub fn query(&mut self, _query: &str) -> String {
         "some res".to_string()
-    }
-}
-
-impl FromContext<SimpleContextX> for DbClient {
-    fn from_context(context: &SimpleContextX) -> Self {
-        context.db_client.clone()
     }
 }

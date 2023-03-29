@@ -1,3 +1,4 @@
+pub use anymap::AnyMap;
 #[cfg(feature = "async")]
 pub use async_trait::async_trait;
 pub use tearup_macro::{tearup, tearup_test};

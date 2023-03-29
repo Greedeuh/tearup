@@ -1,5 +1,6 @@
 use std::any::Any;
 
+use anymap::AnyMap;
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
@@ -33,12 +34,21 @@ pub trait SimpleContext: Sized {
     fn launch_teardown(self) {
         self.teardown();
     }
+
+    fn take<T: 'static>(&mut self) -> T {
+        self.public_context().remove().unwrap()
+    }
+
+    fn public_context(&mut self) -> AnyMap {
+        AnyMap::new()
+    }
 }
 
 #[cfg(feature = "async")]
 mod asyncc {
     use std::any::Any;
 
+    use anymap::AnyMap;
     use async_trait::async_trait;
     use futures::future::BoxFuture;
     pub use futures::future::FutureExt;
@@ -76,6 +86,14 @@ mod asyncc {
 
         async fn launch_teardown(mut self) {
             self.teardown().await;
+        }
+
+        fn take<T: 'static>(&mut self) -> T {
+            self.public_context().remove().unwrap()
+        }
+
+        fn public_context(&mut self) -> AnyMap {
+            AnyMap::new()
         }
     }
 }

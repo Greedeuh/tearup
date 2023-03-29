@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use rocket::fairing::AdHoc;
-use tearup::{tearup_test, AsyncWaitingContext, FromAsyncContext, ReadyFn};
+use tearup::{tearup_test, AnyMap, AsyncWaitingContext, ReadyFn};
 use tearup_examples::rocket;
 
 #[tearup_test(RocketContext)]
@@ -39,6 +39,12 @@ impl<'a> AsyncWaitingContext<'a> for RocketContext {
         free_port(self.port).await;
         ready();
     }
+
+    fn public_context(&mut self) -> AnyMap {
+        let mut public_context = AnyMap::new();
+        public_context.insert(BaseUrl(format!("http://localhost:{}/", self.port)));
+        public_context
+    }
 }
 
 async fn choose_port() -> u16 {
@@ -63,10 +69,3 @@ async fn launch_server_then_notif_ready(port: u16, ready: ReadyFn) -> ServerLife
 
 #[derive(Clone)]
 struct BaseUrl(pub String);
-
-#[async_trait]
-impl FromAsyncContext<'_, RocketContext> for BaseUrl {
-    async fn from_context(context: &RocketContext) -> Self {
-        Self(format!("http://localhost:{}/", context.port))
-    }
-}

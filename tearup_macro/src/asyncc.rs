@@ -9,7 +9,7 @@ pub fn body(
     stmts: &Vec<Stmt>,
 ) -> TokenStream {
     let name = sig.ident.clone();
-    let let_args = define_args(&sig, &context);
+    let let_args = define_args(&sig);
 
     let result = quote! {
 
@@ -39,24 +39,21 @@ pub fn body(
     result.into()
 }
 
-fn define_args(
-    sig: &syn::Signature,
-    context: &Ident,
-) -> Punctuated<proc_macro2::TokenStream, Semi> {
+fn define_args(sig: &syn::Signature) -> Punctuated<proc_macro2::TokenStream, Semi> {
     sig.inputs
         .iter()
         .map(|arg| match arg {
-            FnArg::Typed(arg) => define_arg(arg, context),
+            FnArg::Typed(arg) => define_arg(arg),
             _ => panic!("You should not pass this 'self' args"),
         })
         .collect::<Punctuated<proc_macro2::TokenStream, Semi>>()
 }
 
-fn define_arg(arg: &syn::PatType, context: &Ident) -> proc_macro2::TokenStream {
+fn define_arg(arg: &syn::PatType) -> proc_macro2::TokenStream {
     let name = &arg.pat;
     let ty = &arg.ty;
     quote! {
-        let #name = <#ty as tearup::FromAsyncContext<#context>>::from_context(&context).await;
+        let #name: #ty = context.take();
     }
     .to_token_stream()
 }

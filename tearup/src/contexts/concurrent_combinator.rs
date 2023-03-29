@@ -1,10 +1,9 @@
 use std::thread::spawn;
 
-pub use tearup_macro::{tearup, tearup_test};
-
 use crate::SimpleContext;
 #[cfg(feature = "async")]
 pub use asyncc::*;
+pub use tearup_macro::{tearup, tearup_test};
 
 pub struct ConcurrentContextCombinator<Context1: SimpleContext, Context2: SimpleContext> {
     context1: Context1,
@@ -35,6 +34,14 @@ impl<Context1: SimpleContext + Send + 'static, Context2: SimpleContext> SimpleCo
         self.context2.launch_teardown();
 
         context1_handle.join().unwrap();
+    }
+
+    fn take<T: 'static>(&mut self) -> T {
+        self.context1
+            .public_context()
+            .remove()
+            .or(self.context2.public_context().remove())
+            .unwrap()
     }
 }
 

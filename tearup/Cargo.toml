@@ -1,6 +1,6 @@
 [package]
 name = "tearup"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 authors = ["Adrien Olivon <mail@markus-kohlhase.de>"]
@@ -16,11 +16,12 @@ async = ["dep:async-trait", "dep:futures", "dep:tokio", "tearup_macro/async"]
 default = ["async"]
 
 [dependencies]
-tearup_macro = "0.2"
+tearup_macro = { path = "../tearup_macro"}
 async-trait = { version = "0.1.57", optional = true }
 futures = { version = "0.3.23", optional = true }
 tokio = { version = "1.20.1", features = ["rt", "macros", "time"], optional = true }
 stopwatch = "0.0.7"
+anymap = "0.12.1"
 
 [dev-dependencies]
 macrotest = "1.0.9"
