@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use rocket::fairing::AdHoc;
-use tearup::{tearup_test, AnyMap, AsyncSimpleContext, ReadyFn, TimeGate};
+use tearup::{tearup_test, AnyMap, AsyncReadyFn, AsyncSimpleContext, AsyncTimeGate};
 use tearup_examples::rocket;
 
 #[tearup_test(RocketContext)]
@@ -30,11 +30,11 @@ impl<'a> AsyncSimpleContext<'a> for RocketContext {
     async fn setup() -> Self {
         let port = choose_port().await;
 
-        let gate = TimeGate::new();
+        let gate = AsyncTimeGate::new();
 
         let _srv_life = launch_server_then_notif_ready(port, gate.notifier()).await;
 
-        gate.wait_signal();
+        gate.wait_signal().await;
 
         Self { _srv_life, port }
     }
@@ -58,11 +58,11 @@ async fn free_port(port: u16) {
     AVAILABLE_PORTS.lock().unwrap().push(port);
 }
 
-async fn launch_server_then_notif_ready(port: u16, ready: ReadyFn) -> ServerLife {
+async fn launch_server_then_notif_ready<'a>(port: u16, ready: AsyncReadyFn<'static>) -> ServerLife {
     tokio::task::spawn(async move {
         rocket(port)
             .attach(AdHoc::on_liftoff("Liftoff notifier", |_| {
-                Box::pin(async move { ready() })
+                Box::pin(async move { ready().await })
             }))
             .launch()
             .await
