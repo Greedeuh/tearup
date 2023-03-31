@@ -1,4 +1,4 @@
-use tearup::{tearup_test, AnyMap, SimpleContext};
+use tearup::{tearup_test, AnyMap, SharedContext, SimpleContext};
 
 #[tearup_test(SimpleContextX)]
 fn it_setup_a_fake_db(mut db: DbClient) {
@@ -11,7 +11,7 @@ struct SimpleContextX {
 }
 
 impl SimpleContext for SimpleContextX {
-    fn setup() -> Self {
+    fn setup(_shared_context: &mut SharedContext) -> Self {
         let mut db_client = DbClient::new("random_db_name");
 
         db_client.create_db();

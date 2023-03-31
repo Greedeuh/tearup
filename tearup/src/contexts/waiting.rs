@@ -7,7 +7,7 @@ use std::{
 };
 use stopwatch::Stopwatch;
 
-use crate::{ready_state, ReadyChecksConfig, ReadyFn, SimpleContext};
+use crate::{ready_state, ReadyChecksConfig, ReadyFn, SharedContext, SimpleContext};
 
 /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
 pub trait WaitingContext: Sized {
@@ -34,7 +34,7 @@ pub trait WaitingContext: Sized {
 }
 
 impl<T: WaitingContext> SimpleContext for T {
-    fn setup() -> Self
+    fn setup(shared_context: &mut SharedContext) -> Self
     where
         Self: Sized,
     {

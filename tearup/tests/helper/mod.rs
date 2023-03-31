@@ -1,6 +1,6 @@
 use anymap::AnyMap;
 use std::thread::spawn;
-use tearup::{ReadyChecksConfig, ReadyFn, SimpleContext, WaitingContext};
+use tearup::{ReadyChecksConfig, ReadyFn, SharedContext, SimpleContext, WaitingContext};
 
 mod asserts;
 pub use asserts::*;
@@ -11,7 +11,7 @@ pub struct SecondProof(pub String);
 
 pub struct FirstFullContext;
 impl SimpleContext for FirstFullContext {
-    fn setup() -> Self {
+    fn setup(_shared_context: &mut SharedContext) -> Self {
         Self {}
     }
 
@@ -30,7 +30,7 @@ pub struct FourthProof(pub String);
 
 pub struct SecondFullContext;
 impl SimpleContext for SecondFullContext {
-    fn setup() -> Self {
+    fn setup(_shared_context: &mut SharedContext) -> Self {
         Self {}
     }
 

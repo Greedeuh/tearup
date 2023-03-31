@@ -27,8 +27,9 @@ impl FromContext<CContext> for DbName {
     }
 }
 fn test_with_db_setup_and_teardown() {
-    use tearup::{SimpleContext, WaitingContext};
-    let mut context = CContext::launch_setup();
+    use tearup::{SharedContext, SimpleContext, WaitingContext};
+    let mut shared_context = SharedContext::default();
+    let mut context = CContext::launch_setup(&mut shared_context);
     let db_name: DbName = context.take();
     let text_execution = context
         .launch_test(move || {

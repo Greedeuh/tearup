@@ -3,7 +3,7 @@ use std::{
     thread::sleep,
     time::{Duration, SystemTime},
 };
-use tearup::{tearup, SimpleContext};
+use tearup::{tearup, SharedContext, SimpleContext};
 
 use crate::helper::{assert_order, Checkpoint};
 
@@ -21,7 +21,7 @@ fn it_pass_through_setup_then_teardown() {
 
 struct NiceContext;
 impl SimpleContext for NiceContext {
-    fn setup() -> Self {
+    fn setup(_shared_context: &mut SharedContext) -> Self {
         let mut checkpoint = SETUP_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
 

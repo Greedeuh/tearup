@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use std::time::{Duration, SystemTime};
-use tearup::{tearup, SequentialContextCombinator, SimpleContext};
+use tearup::{tearup, SequentialContextCombinator, SharedContext, SimpleContext};
 
 use crate::helper::{assert_around_100ms, assert_order, Checkpoint};
 
@@ -26,7 +26,7 @@ fn sequential() {}
 
 pub struct FirstContext;
 impl SimpleContext for FirstContext {
-    fn setup() -> Self {
+    fn setup(_shared_context: &mut SharedContext) -> Self {
         let mut checkpoint = FIRST_SETUP_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
 
@@ -43,7 +43,7 @@ impl SimpleContext for FirstContext {
 
 pub struct SecondContext;
 impl SimpleContext for SecondContext {
-    fn setup() -> Self {
+    fn setup(_shared_context: &mut SharedContext) -> Self {
         let mut checkpoint = SECOND_SETUP_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
 

@@ -1,12 +1,11 @@
+use anymap::AnyMap;
 #[cfg(feature = "async")]
 use futures::future::BoxFuture;
 use std::any::Any;
 #[cfg(feature = "async")]
 use std::panic::AssertUnwindSafe;
 
-mod concurrent_combinator;
 mod waiting;
-pub use concurrent_combinator::*;
 pub use waiting::*;
 mod simple;
 pub use simple::*;
@@ -28,4 +27,28 @@ where
     AssertUnwindSafe(async move { test().await })
         .catch_unwind()
         .await
+}
+
+pub struct SharedContext(AnyMap);
+
+impl SharedContext {
+    pub fn register<T: 'static>(&mut self, value: T) {
+        self.0.insert(value);
+    }
+    pub(crate) fn merge(&mut self, another: Self) {
+        self.0.extend(another.0.into_raw().into_values())
+    }
+
+    pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
+        self.0.get_mut()
+    }
+    pub fn get<T: 'static>(&mut self) -> Option<&T> {
+        self.0.get()
+    }
+}
+
+impl Default for SharedContext {
+    fn default() -> Self {
+        Self(AnyMap::new())
+    }
 }

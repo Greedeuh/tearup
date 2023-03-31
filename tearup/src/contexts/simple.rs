@@ -4,14 +4,14 @@ use anymap::AnyMap;
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
-use crate::launch_test;
+use crate::{launch_test, SharedContext};
 
 /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
 pub trait SimpleContext: Sized {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
-    fn setup() -> Self
+    fn setup(shared_context: &mut SharedContext) -> Self
     where
         Self: Sized;
 
@@ -19,8 +19,8 @@ pub trait SimpleContext: Sized {
     /// You should do your clean up here.
     fn teardown(self);
 
-    fn launch_setup() -> Self {
-        Self::setup()
+    fn launch_setup(shared_context: &mut SharedContext) -> Self {
+        Self::setup(shared_context)
     }
 
     fn launch_test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>

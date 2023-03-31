@@ -1,6 +1,9 @@
-use std::thread::spawn;
+use std::{
+    sync::{Arc, Mutex},
+    thread::spawn,
+};
 
-use crate::SimpleContext;
+use crate::{SharedContext, SimpleContext};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 pub use tearup_macro::{tearup, tearup_test};
@@ -16,11 +19,31 @@ impl<Context1: SimpleContext + Send + 'static, Context2: SimpleContext> SimpleCo
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
-    fn setup() -> Self {
-        let context1_handle = spawn(|| Context1::launch_setup());
+    fn setup(shared_context: &mut SharedContext) -> Self {
+        let sc = SharedContext::new();
+        let (context1, context2) = {
+            let shared_context = Arc::new(Mutex::new(Box::new(shared_context)));
 
-        let context2 = Context2::launch_setup();
-        let context1 = context1_handle.join().unwrap();
+            let (context1, context2) = {
+                let shared_context = shared_context.clone();
+
+                let context1_handle = spawn(move || {
+                    let shared_contexteeeee = shared_context.get_mut().unwrap();
+
+                    // Context1::launch_setup(&mut shared_contexteeeee)
+                });
+
+                let context2 = Context2::launch_setup(&mut sc);
+                let context1 = Context1::launch_setup(&mut sc);
+                // let context1 = context1_handle.join().unwrap();
+
+                (context1, context2)
+            };
+
+            (context1, context2)
+        };
+
+        shared_context.merge(sc);
 
         Self { context1, context2 }
     }

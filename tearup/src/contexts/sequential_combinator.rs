@@ -1,6 +1,6 @@
 pub use tearup_macro::{tearup, tearup_test};
 
-use crate::SimpleContext;
+use crate::{SharedContext, SimpleContext};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
@@ -15,9 +15,9 @@ impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
-    fn setup() -> Self {
-        let context1 = Context1::launch_setup();
-        let context2 = Context2::launch_setup();
+    fn setup(shared_context: &mut SharedContext) -> Self {
+        let context1 = Context1::launch_setup(shared_context);
+        let context2 = Context2::launch_setup(shared_context);
 
         Self { context1, context2 }
     }
