@@ -35,13 +35,11 @@ impl SharedContext {
     pub fn register<T: 'static>(&mut self, value: T) {
         self.0.insert(value);
     }
-    pub(crate) fn merge(&mut self, another: Self) {
-        self.0.extend(another.0.into_raw().into_values())
-    }
 
     pub fn get_mut<T: 'static>(&mut self) -> Option<&mut T> {
         self.0.get_mut()
     }
+
     pub fn get<T: 'static>(&mut self) -> Option<&T> {
         self.0.get()
     }

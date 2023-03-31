@@ -14,8 +14,7 @@ pub fn body(
     let result = quote! {
 
         #(#attrs)* async fn #name() {
-            use tearup::FutureExt;
-            use tearup::{AsyncSimpleContext, AsyncWaitingContext};
+            use tearup::{AsyncSimpleContext, FutureExt};
 
 
             let mut context = #context::launch_setup().await;

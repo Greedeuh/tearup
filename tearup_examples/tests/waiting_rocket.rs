@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use rocket::fairing::AdHoc;
-use tearup::{tearup_test, AnyMap, AsyncWaitingContext, ReadyFn};
+use tearup::{tearup_test, AnyMap, AsyncSimpleContext, ReadyFn, TimeGate};
 use tearup_examples::rocket;
 
 #[tearup_test(RocketContext)]
@@ -26,18 +26,19 @@ lazy_static! {
 }
 
 #[async_trait]
-impl<'a> AsyncWaitingContext<'a> for RocketContext {
-    async fn setup(ready: ReadyFn) -> Self {
+impl<'a> AsyncSimpleContext<'a> for RocketContext {
+    async fn setup() -> Self {
         let port = choose_port().await;
 
-        let _srv_life = launch_server_then_notif_ready(port, ready).await;
+        let gate = TimeGate::new();
+
+        let _srv_life = launch_server_then_notif_ready(port, gate.notifier()).await;
 
         Self { _srv_life, port }
     }
 
-    async fn teardown(mut self, ready: ReadyFn) {
+    async fn teardown(mut self) {
         free_port(self.port).await;
-        ready();
     }
 
     fn public_context(&mut self) -> AnyMap {

@@ -23,45 +23,15 @@ pub fn ready_state() -> (ReadyFlag, ReadyFn) {
     (ready_flag, ready)
 }
 
+#[derive(PartialEq, Debug)]
 pub struct ReadyChecksConfig {
     pub duration: Duration,
     pub maximum: usize,
 }
 
 impl ReadyChecksConfig {
-    pub fn ms100() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(10),
-            maximum: 10,
-        }
-    }
-
-    pub fn ms500() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(50),
-            maximum: 10,
-        }
-    }
-
-    pub fn s1() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(100),
-            maximum: 10,
-        }
-    }
-
-    pub fn s2() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(200),
-            maximum: 10,
-        }
-    }
-
-    pub fn s5() -> ReadyChecksConfig {
-        ReadyChecksConfig {
-            duration: Duration::from_millis(500),
-            maximum: 10,
-        }
+    pub fn new(duration: Duration, maximum: usize) -> Self {
+        ReadyChecksConfig { duration, maximum }
     }
 
     pub fn get_longest(mut list: Vec<Self>) -> Self {
@@ -71,6 +41,12 @@ impl ReadyChecksConfig {
 
     pub fn maxium_duration(&self) -> Duration {
         self.duration * self.maximum.try_into().unwrap()
+    }
+}
+
+impl Default for ReadyChecksConfig {
+    fn default() -> Self {
+        Self::new(Duration::from_millis(10), 10)
     }
 }
 

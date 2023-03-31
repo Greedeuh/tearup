@@ -1,134 +1,157 @@
-use anymap::AnyMap;
 #[cfg(feature = "async")]
 pub use asyncc::*;
 use std::{
     sync::{Arc, Mutex},
     thread::sleep,
+    time::Duration,
 };
 use stopwatch::Stopwatch;
 
-use crate::{ready_state, ReadyChecksConfig, ReadyFn, SharedContext, SimpleContext};
+use crate::{ReadyChecksConfig, ReadyFn};
 
-/// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
-pub trait WaitingContext: Sized {
-    /// Will be executed before the test execution
-    /// You should prepare all your test requirement here.
-    /// Use the `ready` to notify that the test can start
-    fn setup(ready: ReadyFn) -> Self
-    where
-        Self: Sized;
-
-    /// Will be executed before the test execution even if the test has panicked
-    /// You should do your clean up here.
-    fn teardown(self, ready: ReadyFn);
-
-    /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
-    /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
-    fn ready_checks_config(&self) -> ReadyChecksConfig {
-        ReadyChecksConfig::ms500()
-    }
-
-    fn public_context(&mut self) -> AnyMap {
-        todo!()
-    }
+pub struct TimeGate {
+    ready_flag: Arc<Mutex<bool>>,
+    ready_checks: ReadyChecksConfig,
 }
 
-impl<T: WaitingContext> SimpleContext for T {
-    fn setup(shared_context: &mut SharedContext) -> Self
-    where
-        Self: Sized,
-    {
-        let (ready_flag, ready) = ready_state();
-        let context = Self::setup(ready);
-        wait_setup(context.ready_checks_config(), ready_flag);
-        context
-    }
-
-    fn teardown(self) {
-        let conf = self.ready_checks_config();
-        let (ready_flag, ready) = ready_state();
-        self.teardown(ready);
-        wait_setup(conf, ready_flag);
-    }
-
-    fn public_context(&mut self) -> AnyMap {
-        self.public_context()
-    }
-}
-
-fn wait_setup(ready_checks: ReadyChecksConfig, ready: Arc<Mutex<bool>>) {
-    let maxium_duration = ready_checks.maxium_duration();
-
-    let ready = || *ready.lock().unwrap();
-
-    let stopwatch = Stopwatch::start_new();
-    while !ready() {
-        if stopwatch.elapsed() >= maxium_duration {
-            panic!("Setup has timeout, make sure to call the 'ready' fn or raise up timeout.")
+impl TimeGate {
+    pub fn new() -> Self {
+        TimeGate {
+            ready_flag: Arc::new(Mutex::new(false)),
+            ready_checks: ReadyChecksConfig::default(),
         }
-        sleep(ready_checks.duration);
+    }
+
+    pub fn notifier(&self) -> ReadyFn {
+        let ready_flag = self.ready_flag.clone();
+
+        Box::new(move || {
+            let mut ready = ready_flag.lock().unwrap();
+            *ready = true;
+        })
+    }
+
+    pub fn wait_signal(self) {
+        let ready = || *self.ready_flag.lock().unwrap();
+
+        while !ready() {
+            sleep(self.ready_checks.duration);
+        }
+    }
+
+    pub fn wait_signal_or_timeout(self, timeout: Duration) -> Result<(), TimeoutError> {
+        let stopwatch = Stopwatch::start_new();
+        let ready = || *self.ready_flag.lock().unwrap();
+
+        while !ready() {
+            if stopwatch.elapsed() >= timeout {
+                return Err(TimeoutError {
+                    duration: timeout,
+                    ready_checks: self.ready_checks,
+                });
+            }
+            sleep(self.ready_checks.duration);
+        }
+
+        Ok(())
+    }
+}
+#[derive(PartialEq, Debug)]
+pub struct TimeoutError {
+    pub duration: Duration,
+    pub ready_checks: ReadyChecksConfig,
+}
+
+impl Default for TimeGate {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::{
+        thread::{sleep, spawn},
+        time::Duration,
+    };
+
+    use stopwatch::Stopwatch;
+
+    use crate::{ReadyChecksConfig, TimeGate, TimeoutError};
+
+    #[test]
+    fn it_waits_signal() {
+        let stopwatch = Stopwatch::start_new();
+
+        let gate = TimeGate::new();
+        let ready = gate.notifier();
+
+        spawn(move || {
+            sleep(Duration::from_millis(100));
+            ready();
+        });
+
+        gate.wait_signal();
+        assert_around_100ms_(&stopwatch);
+    }
+
+    #[test]
+    fn it_waits_signal_even_with_timeout_option() {
+        let stopwatch = Stopwatch::start_new();
+
+        let gate = TimeGate::new();
+        let ready = gate.notifier();
+
+        spawn(move || {
+            sleep(Duration::from_millis(100));
+            ready();
+        });
+
+        assert!(gate
+            .wait_signal_or_timeout(Duration::from_millis(115))
+            .is_ok(),);
+        assert_around_100ms_(&stopwatch);
+    }
+
+    #[test]
+    fn it_timeouts() {
+        let stopwatch = Stopwatch::start_new();
+
+        let gate = TimeGate::new();
+        let ready = gate.notifier();
+
+        spawn(move || {
+            sleep(Duration::from_millis(100));
+            ready();
+        });
+
+        let timeout = Duration::from_millis(85);
+        assert_eq!(
+            gate.wait_signal_or_timeout(Duration::from_millis(85)),
+            Err(TimeoutError {
+                duration: timeout,
+                ready_checks: ReadyChecksConfig::default(),
+            })
+        );
+        assert_around_100ms_(&stopwatch);
+    }
+
+    fn assert_around_100ms_(stopwatch: &Stopwatch) {
+        let ms = stopwatch.elapsed_ms();
+        assert!(115 > ms, "stopwatch has {} elapsed ms > 115", ms);
+        assert!(ms > 85, "stopwatch has {} elapsed ms < 85", ms);
     }
 }
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use anymap::AnyMap;
-    use async_trait::async_trait;
+
     pub use futures::future::FutureExt;
     use std::sync::{Arc, Mutex};
     use stopwatch::Stopwatch;
     use tokio::time::sleep;
 
     use crate::{ready_state, AsyncSimpleContext, ReadyChecksConfig, ReadyFn};
-
-    /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
-    #[async_trait]
-    pub trait AsyncWaitingContext<'a>: Sync + Send {
-        /// Will be executed before the test execution
-        /// You should prepare all your test requirement here.
-        /// Use the `ready` to notify that the test can start
-        async fn setup(ready: ReadyFn) -> Self
-        where
-            Self: Sized;
-
-        /// Will be executed before the test execution even if the test has panicked
-        /// You should do your clean up here.
-        async fn teardown(mut self, ready: ReadyFn);
-
-        /// Until the `setup` notify it's ready wait for a `duration` as many times needed with a `max`.
-        /// So here we return this ReadyChecksConfig { duration: 100ms, max: 50} and can be overriden as you wish.
-        fn ready_checks_config(&self) -> ReadyChecksConfig {
-            ReadyChecksConfig::ms500()
-        }
-
-        fn public_context(&mut self) -> AnyMap {
-            AnyMap::new()
-        }
-    }
-
-    #[async_trait]
-    impl<'a, T: AsyncWaitingContext<'a>> AsyncSimpleContext<'a> for T {
-        async fn setup() -> Self
-        where
-            Self: Sized,
-        {
-            let (ready_flag, ready) = ready_state();
-            let context = Self::setup(ready).await;
-            wait_setup(context.ready_checks_config(), ready_flag).await;
-            context
-        }
-
-        async fn teardown(mut self) {
-            let config = self.ready_checks_config();
-            let (ready_flag, ready) = ready_state();
-            self.teardown(ready).await;
-            wait_setup(config, ready_flag).await;
-        }
-
-        fn public_context(&mut self) -> AnyMap {
-            self.public_context()
-        }
-    }
 
     async fn wait_setup(ready_checks: ReadyChecksConfig, ready: Arc<Mutex<bool>>) {
         let maxium_duration = ready_checks.maxium_duration();
