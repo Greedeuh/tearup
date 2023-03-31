@@ -34,6 +34,8 @@ impl<'a> AsyncSimpleContext<'a> for RocketContext {
 
         let _srv_life = launch_server_then_notif_ready(port, gate.notifier()).await;
 
+        gate.wait_signal();
+
         Self { _srv_life, port }
     }
 
