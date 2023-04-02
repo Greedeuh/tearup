@@ -103,12 +103,6 @@ mod asyncc {
             })
         }
 
-        pub async fn wait_signal(self) {
-            while !self.is_ready().await {
-                sleep(self.ready_checks_interval).await;
-            }
-        }
-
         pub async fn wait_signal_or_timeout(self, timeout: Duration) -> Result<(), TimeoutError> {
             let stopwatch = Stopwatch::start_new();
 
@@ -160,7 +154,9 @@ mod asyncc {
             .await
             .unwrap();
 
-            gate.wait_signal().await;
+            gate.wait_signal_or_timeout(Duration::from_millis(115))
+                .await
+                .unwrap();
             assert_around_100ms_(&stopwatch);
         }
 

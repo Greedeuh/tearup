@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{sync::Mutex, time::Duration};
 
 use async_trait::async_trait;
 use lazy_static::lazy_static;
@@ -37,7 +37,9 @@ impl<'a> AsyncSimpleContext<'a> for RocketContext {
 
         let _srv_life = launch_server_then_notif_ready(port, gate.notifier()).await;
 
-        gate.wait_signal().await;
+        gate.wait_signal_or_timeout(Duration::from_millis(115))
+            .await
+            .unwrap();
 
         shared_context
             .register(BaseUrl(format!("http://localhost:{}/", port)))
