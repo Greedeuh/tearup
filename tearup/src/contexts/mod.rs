@@ -5,8 +5,6 @@ use std::any::Any;
 #[cfg(feature = "async")]
 use std::panic::AssertUnwindSafe;
 
-mod waiting;
-pub use waiting::*;
 mod simple;
 pub use simple::*;
 mod sequential_combinator;

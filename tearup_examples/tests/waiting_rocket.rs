@@ -4,7 +4,10 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use rocket::fairing::AdHoc;
-use tearup::{tearup_test, AsyncReadyFn, AsyncSharedContext, AsyncSimpleContext, AsyncTimeGate};
+use tearup::{
+    helper::{AsyncReadyFn, AsyncTimeGate},
+    tearup_test, AsyncSharedContext, AsyncSimpleContext,
+};
 use tearup_examples::rocket;
 
 #[tearup_test(RocketContext)]

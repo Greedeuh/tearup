@@ -7,7 +7,9 @@ use std::{
 };
 use stopwatch::Stopwatch;
 
-use crate::ReadyFn;
+use crate::TimeoutError;
+
+pub type ReadyFn = Box<dyn Fn() + Send + Sync>;
 
 pub struct TimeGate {
     ready_flag: Arc<Mutex<bool>>,
@@ -55,12 +57,6 @@ impl TimeGate {
 
         Ok(())
     }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct TimeoutError {
-    pub duration: Duration,
-    pub ready_checks_interval: Duration,
 }
 
 impl Default for TimeGate {
@@ -143,11 +139,12 @@ mod asyncc {
     #[cfg(test)]
     mod test {
         use std::time::Duration;
-
         use stopwatch::Stopwatch;
         use tokio::{spawn, time::sleep};
 
-        use crate::{AsyncTimeGate, TimeoutError};
+        use crate::TimeoutError;
+
+        use super::AsyncTimeGate;
 
         #[tokio::test]
         async fn it_waits_signal() {
@@ -223,10 +220,10 @@ mod test {
         thread::{sleep, spawn},
         time::Duration,
     };
-
     use stopwatch::Stopwatch;
 
-    use crate::{TimeGate, TimeoutError};
+    use super::TimeGate;
+    use crate::TimeoutError;
 
     #[test]
     fn it_waits_signal() {
