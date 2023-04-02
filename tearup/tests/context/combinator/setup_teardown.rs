@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use std::time::{Duration, SystemTime};
-use tearup::{tearup, SequentialContextCombinator, SharedContext, SimpleContext};
+use tearup::{tearup, ContextCombinator, SharedContext, SimpleContext};
 
 use crate::helper::{assert_order, Checkpoint};
 
@@ -20,7 +20,7 @@ fn it_pass_through_setup_then_teardown_of_both_contexts_one_after_the_other() {
     assert_order(&FIRST_TEARDOWN_CHECKPOINT, &SECOND_TEARDOWN_CHECKPOINT);
 }
 
-type B = SequentialContextCombinator<FirstContext, SecondContext>;
+type B = ContextCombinator<FirstContext, SecondContext>;
 #[tearup(B)]
 fn sequential() {}
 
@@ -62,8 +62,7 @@ mod asyncc {
     use lazy_static::lazy_static;
     use std::time::{Duration, SystemTime};
     use tearup::{
-        async_trait, tearup, AsyncSequentialContextCombinator, AsyncSharedContext,
-        AsyncSimpleContext,
+        async_trait, tearup, AsyncContextCombinator, AsyncSharedContext, AsyncSimpleContext,
     };
     use tokio::time::sleep;
 
@@ -85,7 +84,7 @@ mod asyncc {
         assert_async_order(&FIRST_TEARDOWN_CHECKPOINT, &SECOND_TEARDOWN_CHECKPOINT).await;
     }
 
-    type B = AsyncSequentialContextCombinator<FirstContext, SecondContext>;
+    type B = AsyncContextCombinator<FirstContext, SecondContext>;
     #[tearup(B)]
     async fn sequential() {}
 

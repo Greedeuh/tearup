@@ -1,4 +1,4 @@
-use tearup::{tearup, SequentialContextCombinator};
+use tearup::{tearup, ContextCombinator};
 
 use crate::helper::{
     FirstFullContext, FirstProof, FourthProof, SecondFullContext, SecondProof, ThirdProof,
@@ -9,7 +9,7 @@ fn it_gives_access_to_variables() {
     it_uses_some_variables();
 }
 
-type Combination = SequentialContextCombinator<FirstFullContext, SecondFullContext>;
+type Combination = ContextCombinator<FirstFullContext, SecondFullContext>;
 
 #[tearup(Combination)]
 fn it_uses_some_variables(mut a: FirstProof, b: SecondProof, c: ThirdProof, d: FourthProof) {
@@ -23,7 +23,7 @@ fn it_uses_some_variables(mut a: FirstProof, b: SecondProof, c: ThirdProof, d: F
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use tearup::{tearup, AsyncSequentialContextCombinator};
+    use tearup::{tearup, AsyncContextCombinator};
 
     use crate::helper::{
         AsyncFirstFullContext, AsyncSecondFullContext, FirstProof, FourthProof, SecondProof,
@@ -35,8 +35,7 @@ mod asyncc {
         it_uses_some_variables().await;
     }
 
-    type Combination =
-        AsyncSequentialContextCombinator<AsyncFirstFullContext, AsyncSecondFullContext>;
+    type Combination = AsyncContextCombinator<AsyncFirstFullContext, AsyncSecondFullContext>;
 
     #[tearup(Combination)]
     async fn it_uses_some_variables(

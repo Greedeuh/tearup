@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::{launch_test, SharedContext};
+use crate::SharedContext;
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
@@ -26,7 +26,7 @@ pub trait SimpleContext: Sized {
         TestFn: FnOnce(),
         Self: Sized,
     {
-        launch_test(test)
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(test))
     }
 
     fn launch_teardown(self, shared_context: &mut SharedContext) {
@@ -39,9 +39,9 @@ mod asyncc {
     use async_trait::async_trait;
     use futures::future::BoxFuture;
     pub use futures::future::FutureExt;
-    use std::any::Any;
+    use std::{any::Any, panic::AssertUnwindSafe};
 
-    use crate::{contexts::async_launch_test, AsyncSharedContext};
+    use crate::AsyncSharedContext;
 
     /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
@@ -69,7 +69,9 @@ mod asyncc {
             TestFn: FnOnce() -> BoxFuture<'a, ()> + Send,
             Self: Sized,
         {
-            async_launch_test(test).await
+            AssertUnwindSafe(async move { test().await })
+                .catch_unwind()
+                .await
         }
 
         async fn launch_teardown(mut self, shared_context: AsyncSharedContext) {

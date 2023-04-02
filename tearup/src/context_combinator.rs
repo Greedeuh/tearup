@@ -4,13 +4,13 @@ use crate::{SharedContext, SimpleContext};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
-pub struct SequentialContextCombinator<Context1: SimpleContext, Context2: SimpleContext> {
+pub struct ContextCombinator<Context1: SimpleContext, Context2: SimpleContext> {
     context1: Context1,
     context2: Context2,
 }
 
 impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
-    for SequentialContextCombinator<Context1, Context2>
+    for ContextCombinator<Context1, Context2>
 {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
@@ -37,7 +37,7 @@ mod asyncc {
 
     use crate::{AsyncSharedContext, AsyncSimpleContext};
 
-    pub struct AsyncSequentialContextCombinator<Context1, Context2>
+    pub struct AsyncContextCombinator<Context1, Context2>
     where
         for<'a> Context1: AsyncSimpleContext<'a> + Send,
         for<'a> Context2: AsyncSimpleContext<'a> + Send,
@@ -47,8 +47,7 @@ mod asyncc {
     }
 
     #[async_trait]
-    impl<Context1, Context2> AsyncSimpleContext<'_>
-        for AsyncSequentialContextCombinator<Context1, Context2>
+    impl<Context1, Context2> AsyncSimpleContext<'_> for AsyncContextCombinator<Context1, Context2>
     where
         for<'a> Context1: AsyncSimpleContext<'a> + Send,
         for<'a> Context2: AsyncSimpleContext<'a> + Send,
