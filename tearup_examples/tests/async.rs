@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use tearup::{tearup_test, AnyMap, AsyncSimpleContext};
+use tearup::{tearup_test, AsyncSharedContext, AsyncSimpleContext};
 
 #[tearup_test(DbContext)]
 async fn it_setup_a_fake_db(mut db: DbClient) {
@@ -16,21 +16,17 @@ struct DbContext {
 
 #[async_trait]
 impl<'a> AsyncSimpleContext<'a> for DbContext {
-    async fn setup() -> Self {
+    async fn setup(shared_context: AsyncSharedContext) -> Self {
         let mut db_client = DbClient::new("random_db_name");
 
         db_client.create_db().await;
 
+        shared_context.register(db_client.clone()).await;
+
         Self { db_client }
     }
 
-    fn public_context(&mut self) -> AnyMap {
-        let mut map = AnyMap::new();
-        map.insert(self.db_client.clone());
-        map
-    }
-
-    async fn teardown(mut self) {
+    async fn teardown(mut self, _shared_context: AsyncSharedContext) {
         self.db_client.drop_db().await;
     }
 }

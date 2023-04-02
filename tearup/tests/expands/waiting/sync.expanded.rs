@@ -30,12 +30,12 @@ fn test_with_db_setup_and_teardown() {
     use tearup::{SharedContext, SimpleContext};
     let mut shared_context = SharedContext::default();
     let mut context = CContext::launch_setup(&mut shared_context);
-    let db_name: DbName = context.take();
+    let db_name: DbName = shared_context.get().unwrap();
     let text_execution = context
         .launch_test(move || {
             if "db_name" == &db_name.0 {}
         });
-    context.launch_teardown();
+    context.launch_teardown(&mut shared_context);
     if let Err(err) = text_execution {
         std::panic::resume_unwind(err)
     }

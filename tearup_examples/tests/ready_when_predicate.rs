@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use std::time::Duration;
 use tearup::{
-    async_ready_when, ready_when, tearup_test, AsyncSimpleContext, FutureExt, SharedContext,
-    SimpleContext, TimeGate,
+    async_ready_when, ready_when, tearup_test, AsyncSharedContext, AsyncSimpleContext, FutureExt,
+    SharedContext, SimpleContext, TimeGate,
 };
 
 #[tearup_test(AsyncReadyWhenContext)]
@@ -12,7 +12,7 @@ struct AsyncReadyWhenContext;
 
 #[async_trait]
 impl AsyncSimpleContext<'_> for AsyncReadyWhenContext {
-    async fn setup() -> Self {
+    async fn setup(_shared_context: AsyncSharedContext) -> Self {
         launch_server();
 
         let gate = TimeGate::new();
@@ -27,7 +27,7 @@ impl AsyncSimpleContext<'_> for AsyncReadyWhenContext {
         Self {}
     }
 
-    async fn teardown(mut self) {}
+    async fn teardown(mut self, _shared_context: AsyncSharedContext) {}
 }
 
 fn launch_server() {}
@@ -54,7 +54,7 @@ impl SimpleContext for SyncReadyWhenContext {
         Self {}
     }
 
-    fn teardown(self) {}
+    fn teardown(self, _shared_context: &mut SharedContext) {}
 }
 
 fn sync_ping_server() -> Result<(), ()> {

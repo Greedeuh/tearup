@@ -24,17 +24,9 @@ impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
 
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
-    fn teardown(self) {
-        self.context1.launch_teardown();
-        self.context2.launch_teardown();
-    }
-
-    fn take<T: 'static>(&mut self) -> T {
-        self.context1
-            .public_context()
-            .remove()
-            .or(self.context2.public_context().remove())
-            .unwrap()
+    fn teardown(self, shared_context: &mut SharedContext) {
+        self.context1.launch_teardown(shared_context);
+        self.context2.launch_teardown(shared_context);
     }
 }
 
@@ -43,7 +35,7 @@ mod asyncc {
     use async_trait::async_trait;
     pub use tearup_macro::{tearup, tearup_test};
 
-    use crate::AsyncSimpleContext;
+    use crate::{AsyncSharedContext, AsyncSimpleContext};
 
     pub struct AsyncSequentialContextCombinator<Context1, Context2>
     where
@@ -61,17 +53,17 @@ mod asyncc {
         for<'a> Context1: AsyncSimpleContext<'a> + Send,
         for<'a> Context2: AsyncSimpleContext<'a> + Send,
     {
-        async fn setup() -> Self {
-            let context1 = Context1::launch_setup().await;
-            let context2 = Context2::launch_setup().await;
+        async fn setup(shared_context: AsyncSharedContext) -> Self {
+            let context1 = Context1::launch_setup(shared_context.clone()).await;
+            let context2 = Context2::launch_setup(shared_context).await;
             Self { context1, context2 }
         }
 
         /// Will be executed before the test execution even if the test has panicked
         /// You should do your clean up here.
-        async fn teardown(mut self) {
-            self.context1.teardown().await;
-            self.context2.teardown().await;
+        async fn teardown(mut self, shared_context: AsyncSharedContext) {
+            self.context1.teardown(shared_context.clone()).await;
+            self.context2.teardown(shared_context).await;
         }
     }
 }

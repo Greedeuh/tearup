@@ -14,10 +14,10 @@ pub fn body(
     let result = quote! {
 
         #(#attrs)* async fn #name() {
-            use tearup::{AsyncSimpleContext, FutureExt};
+            use tearup::{AsyncSimpleContext, AsyncSharedContext, FutureExt};
 
-
-            let mut context = #context::launch_setup().await;
+            let mut shared_context = AsyncSharedContext::default();
+            let mut context = #context::launch_setup(shared_context.clone()).await;
 
             #let_args
 
@@ -27,7 +27,7 @@ pub fn body(
                 }.boxed()
             }).await;
 
-            context.launch_teardown().await;
+            context.launch_teardown(shared_context).await;
 
             if let Err(err) = text_execution {
                 std::panic::resume_unwind(err)
@@ -52,7 +52,7 @@ fn define_arg(arg: &syn::PatType) -> proc_macro2::TokenStream {
     let name = &arg.pat;
     let ty = &arg.ty;
     quote! {
-        let #name: #ty = context.take();
+        let #name: #ty = shared_context.get().await.unwrap();
     }
     .to_token_stream()
 }

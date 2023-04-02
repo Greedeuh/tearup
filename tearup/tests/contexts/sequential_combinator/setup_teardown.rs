@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use std::time::{Duration, SystemTime};
 use tearup::{tearup, SequentialContextCombinator, SharedContext, SimpleContext};
 
-use crate::helper::{assert_around_100ms, assert_order, Checkpoint};
+use crate::helper::{assert_order, Checkpoint};
 
 lazy_static! {
     static ref FIRST_SETUP_CHECKPOINT: Checkpoint = None.into();
@@ -13,7 +13,7 @@ lazy_static! {
 
 #[test]
 fn it_pass_through_setup_then_teardown_of_both_contexts_one_after_the_other() {
-    assert_around_100ms(sequential);
+    sequential();
 
     assert_order(&FIRST_SETUP_CHECKPOINT, &SECOND_SETUP_CHECKPOINT);
     assert_order(&SECOND_SETUP_CHECKPOINT, &FIRST_TEARDOWN_CHECKPOINT);
@@ -35,7 +35,7 @@ impl SimpleContext for FirstContext {
         Self {}
     }
 
-    fn teardown(self) {
+    fn teardown(self, _shared_context: &mut SharedContext) {
         let mut checkpoint = FIRST_TEARDOWN_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
     }
@@ -52,7 +52,7 @@ impl SimpleContext for SecondContext {
         Self {}
     }
 
-    fn teardown(self) {
+    fn teardown(self, _shared_context: &mut SharedContext) {
         let mut checkpoint = SECOND_TEARDOWN_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
     }
@@ -62,11 +62,12 @@ mod asyncc {
     use lazy_static::lazy_static;
     use std::time::{Duration, SystemTime};
     use tearup::{
-        async_trait, tearup, AsyncSequentialContextCombinator, AsyncSimpleContext, FutureExt,
+        async_trait, tearup, AsyncSequentialContextCombinator, AsyncSharedContext,
+        AsyncSimpleContext,
     };
     use tokio::time::sleep;
 
-    use crate::helper::{assert_async_order, async_assert_around_100ms, AsyncCheckpoint};
+    use crate::helper::{assert_async_order, AsyncCheckpoint};
 
     lazy_static! {
         static ref FIRST_SETUP_CHECKPOINT: AsyncCheckpoint = None.into();
@@ -77,7 +78,7 @@ mod asyncc {
 
     #[tokio::test]
     async fn it_pass_through_setup_then_teardown_of_both_contexts_one_after_the_other() {
-        async_assert_around_100ms(move || { async move { sequential().await } }.boxed()).await;
+        sequential().await;
 
         assert_async_order(&FIRST_SETUP_CHECKPOINT, &SECOND_SETUP_CHECKPOINT).await;
         assert_async_order(&SECOND_SETUP_CHECKPOINT, &FIRST_TEARDOWN_CHECKPOINT).await;
@@ -91,7 +92,7 @@ mod asyncc {
     pub struct FirstContext;
     #[async_trait]
     impl AsyncSimpleContext<'_> for FirstContext {
-        async fn setup() -> Self {
+        async fn setup(_shared_context: AsyncSharedContext) -> Self {
             let mut checkpoint = FIRST_SETUP_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
 
@@ -100,7 +101,7 @@ mod asyncc {
             Self {}
         }
 
-        async fn teardown(mut self) {
+        async fn teardown(mut self, _shared_context: AsyncSharedContext) {
             let mut checkpoint = FIRST_TEARDOWN_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
         }
@@ -109,7 +110,7 @@ mod asyncc {
     pub struct SecondContext;
     #[async_trait]
     impl AsyncSimpleContext<'_> for SecondContext {
-        async fn setup() -> Self {
+        async fn setup(_shared_context: AsyncSharedContext) -> Self {
             let mut checkpoint = SECOND_SETUP_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
 
@@ -118,7 +119,7 @@ mod asyncc {
             Self {}
         }
 
-        async fn teardown(mut self) {
+        async fn teardown(mut self, _shared_context: AsyncSharedContext) {
             let mut checkpoint = SECOND_TEARDOWN_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
         }

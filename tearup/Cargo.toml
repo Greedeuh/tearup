@@ -19,7 +19,7 @@ default = ["async"]
 tearup_macro = { path = "../tearup_macro"}
 async-trait = { version = "0.1.57", optional = true }
 futures = { version = "0.3.23", optional = true }
-tokio = { version = "1.20.1", features = ["rt", "macros", "time"], optional = true }
+tokio = { version = "1.20.1", features = ["rt", "macros", "time", "sync"], optional = true }
 stopwatch = "0.0.7"
 anymap = "1.0.0-beta.2"
 

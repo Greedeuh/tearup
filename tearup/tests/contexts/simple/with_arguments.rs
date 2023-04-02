@@ -20,7 +20,7 @@ mod asyncc {
     use async_trait::async_trait;
     use lazy_static::lazy_static;
     use std::time::{Duration, SystemTime};
-    use tearup::{tearup, AsyncSimpleContext};
+    use tearup::{tearup, AsyncSharedContext, AsyncSimpleContext};
     use tokio::time::sleep;
 
     use crate::helper::{assert_async_order, AsyncCheckpoint};
@@ -40,7 +40,7 @@ mod asyncc {
     struct NiceContext;
     #[async_trait]
     impl AsyncSimpleContext<'_> for NiceContext {
-        async fn setup() -> Self {
+        async fn setup(_shared_context: AsyncSharedContext) -> Self {
             let mut checkpoint = SETUP_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
 
@@ -49,7 +49,7 @@ mod asyncc {
             Self {}
         }
 
-        async fn teardown(mut self) {
+        async fn teardown(mut self, _shared_context: AsyncSharedContext) {
             let mut checkpoint = TEARDOWN_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
         }

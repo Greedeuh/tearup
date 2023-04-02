@@ -25,7 +25,7 @@ pub fn body(
                 #(#stmts)*
             });
 
-            context.launch_teardown();
+            context.launch_teardown(&mut shared_context);
 
             if let Err(err) = text_execution {
                 std::panic::resume_unwind(err)
@@ -50,7 +50,7 @@ fn define_arg(arg: &syn::PatType) -> proc_macro2::TokenStream {
     let name = &arg.pat;
     let ty = &arg.ty;
     quote! {
-        let #name: #ty = context.take();
+        let #name: #ty = shared_context.get().unwrap();
     }
     .to_token_stream()
 }

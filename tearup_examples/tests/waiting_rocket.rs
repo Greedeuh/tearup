@@ -4,12 +4,12 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use reqwest::StatusCode;
 use rocket::fairing::AdHoc;
-use tearup::{tearup_test, AnyMap, AsyncReadyFn, AsyncSimpleContext, AsyncTimeGate};
+use tearup::{tearup_test, AsyncReadyFn, AsyncSharedContext, AsyncSimpleContext, AsyncTimeGate};
 use tearup_examples::rocket;
 
 #[tearup_test(RocketContext)]
 async fn it_launches_the_server(url: BaseUrl) {
-    let response = reqwest::get(url.0).await.unwrap();
+    let response = reqwest::get(&url.0).await.unwrap();
 
     assert_eq!(StatusCode::OK, response.status())
 }
@@ -27,7 +27,7 @@ lazy_static! {
 
 #[async_trait]
 impl<'a> AsyncSimpleContext<'a> for RocketContext {
-    async fn setup() -> Self {
+    async fn setup(shared_context: AsyncSharedContext) -> Self {
         let port = choose_port().await;
 
         let gate = AsyncTimeGate::new();
@@ -36,17 +36,15 @@ impl<'a> AsyncSimpleContext<'a> for RocketContext {
 
         gate.wait_signal().await;
 
+        shared_context
+            .register(BaseUrl(format!("http://localhost:{}/", port)))
+            .await;
+
         Self { _srv_life, port }
     }
 
-    async fn teardown(mut self) {
+    async fn teardown(mut self, _shared_context: AsyncSharedContext) {
         free_port(self.port).await;
-    }
-
-    fn public_context(&mut self) -> AnyMap {
-        let mut public_context = AnyMap::new();
-        public_context.insert(BaseUrl(format!("http://localhost:{}/", self.port)));
-        public_context
     }
 }
 

@@ -1,4 +1,4 @@
-use tearup::{tearup_test, AnyMap, SharedContext, SimpleContext};
+use tearup::{tearup_test, SharedContext, SimpleContext};
 
 #[tearup_test(SimpleContextX)]
 fn it_setup_a_fake_db(mut db: DbClient) {
@@ -6,27 +6,21 @@ fn it_setup_a_fake_db(mut db: DbClient) {
     assert_eq!("some res", db.query("some query to assert the side effect"));
 }
 
-struct SimpleContextX {
-    db_client: DbClient,
-}
+struct SimpleContextX {}
 
 impl SimpleContext for SimpleContextX {
-    fn setup(_shared_context: &mut SharedContext) -> Self {
+    fn setup(shared_context: &mut SharedContext) -> Self {
         let mut db_client = DbClient::new("random_db_name");
 
         db_client.create_db();
 
-        Self { db_client }
+        shared_context.register(db_client.clone());
+
+        Self {}
     }
 
-    fn public_context(&mut self) -> AnyMap {
-        let mut map = AnyMap::new();
-        map.insert(self.db_client.clone());
-        map
-    }
-
-    fn teardown(mut self) {
-        self.db_client.drop_db();
+    fn teardown(self, shared_context: &mut SharedContext) {
+        shared_context.get::<DbClient>().unwrap().drop_db();
     }
 }
 

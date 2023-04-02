@@ -1,10 +1,8 @@
 use std::any::Any;
 
-use anymap::AnyMap;
+use crate::{launch_test, SharedContext};
 #[cfg(feature = "async")]
 pub use asyncc::*;
-
-use crate::{launch_test, SharedContext};
 
 /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
 pub trait SimpleContext: Sized {
@@ -17,7 +15,7 @@ pub trait SimpleContext: Sized {
 
     /// Will be executed before the test execution even if the test has panicked
     /// You should do your clean up here.
-    fn teardown(self);
+    fn teardown(self, _shared_context: &mut SharedContext);
 
     fn launch_setup(shared_context: &mut SharedContext) -> Self {
         Self::setup(shared_context)
@@ -31,29 +29,19 @@ pub trait SimpleContext: Sized {
         launch_test(test)
     }
 
-    fn launch_teardown(self) {
-        self.teardown();
-    }
-
-    fn take<T: 'static>(&mut self) -> T {
-        self.public_context().remove().unwrap()
-    }
-
-    fn public_context(&mut self) -> AnyMap {
-        AnyMap::new()
+    fn launch_teardown(self, shared_context: &mut SharedContext) {
+        self.teardown(shared_context);
     }
 }
 
 #[cfg(feature = "async")]
 mod asyncc {
-    use std::any::Any;
-
-    use anymap::AnyMap;
     use async_trait::async_trait;
     use futures::future::BoxFuture;
     pub use futures::future::FutureExt;
+    use std::any::Any;
 
-    use crate::contexts::async_launch_test;
+    use crate::{contexts::async_launch_test, AsyncSharedContext};
 
     /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
@@ -61,19 +49,19 @@ mod asyncc {
         /// Will be executed before the test execution
         /// You should prepare all your test requirement here.
         /// Use the `ready` to notify that the test can start
-        async fn setup() -> Self
+        async fn setup(shared_context: AsyncSharedContext) -> Self
         where
             Self: Sized;
 
         /// Will be executed before the test execution even if the test has panicked
         /// You should do your clean up here.
-        async fn teardown(mut self);
+        async fn teardown(mut self, shared_context: AsyncSharedContext);
 
-        async fn launch_setup() -> Self
+        async fn launch_setup(shared_context: AsyncSharedContext) -> Self
         where
             Self: Sized,
         {
-            Self::setup().await
+            Self::setup(shared_context).await
         }
 
         async fn launch_test<TestFn>(&mut self, test: TestFn) -> Result<(), Box<dyn Any + Send>>
@@ -84,16 +72,8 @@ mod asyncc {
             async_launch_test(test).await
         }
 
-        async fn launch_teardown(mut self) {
-            self.teardown().await;
-        }
-
-        fn take<T: 'static>(&mut self) -> T {
-            self.public_context().remove().unwrap()
-        }
-
-        fn public_context(&mut self) -> AnyMap {
-            AnyMap::new()
+        async fn launch_teardown(mut self, shared_context: AsyncSharedContext) {
+            self.teardown(shared_context).await;
         }
     }
 }
