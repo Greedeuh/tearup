@@ -15,7 +15,7 @@ impl AsyncSimpleContext<'_> for AsyncReadyWhenContext {
     async fn setup(_shared_context: AsyncSharedContext) -> Self {
         launch_server();
 
-        let gate = TimeGate::new();
+        let gate = TimeGate::default();
 
         async_ready_when(
             gate.notifier(),
@@ -41,7 +41,7 @@ struct SyncReadyWhenContext;
 #[async_trait]
 impl SimpleContext for SyncReadyWhenContext {
     fn setup(_shared_context: &mut SharedContext) -> Self {
-        let gate = TimeGate::new();
+        let gate = TimeGate::default();
 
         launch_server();
 

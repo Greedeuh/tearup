@@ -7,18 +7,18 @@ use std::{
 };
 use stopwatch::Stopwatch;
 
-use crate::{ReadyChecksConfig, ReadyFn};
+use crate::ReadyFn;
 
 pub struct TimeGate {
     ready_flag: Arc<Mutex<bool>>,
-    ready_checks: ReadyChecksConfig,
+    ready_checks_interval: Duration,
 }
 
 impl TimeGate {
-    pub fn new() -> Self {
+    pub fn new(ready_checks_interval: Duration) -> Self {
         TimeGate {
             ready_flag: Arc::new(Mutex::new(false)),
-            ready_checks: ReadyChecksConfig::default(),
+            ready_checks_interval,
         }
     }
 
@@ -35,7 +35,7 @@ impl TimeGate {
         let ready = || *self.ready_flag.lock().unwrap();
 
         while !ready() {
-            sleep(self.ready_checks.duration);
+            sleep(self.ready_checks_interval);
         }
     }
 
@@ -47,10 +47,10 @@ impl TimeGate {
             if stopwatch.elapsed() >= timeout {
                 return Err(TimeoutError {
                     duration: timeout,
-                    ready_checks: self.ready_checks,
+                    ready_checks_interval: self.ready_checks_interval,
                 });
             }
-            sleep(self.ready_checks.duration);
+            sleep(self.ready_checks_interval);
         }
 
         Ok(())
@@ -60,12 +60,12 @@ impl TimeGate {
 #[derive(PartialEq, Debug)]
 pub struct TimeoutError {
     pub duration: Duration,
-    pub ready_checks: ReadyChecksConfig,
+    pub ready_checks_interval: Duration,
 }
 
 impl Default for TimeGate {
     fn default() -> Self {
-        Self::new()
+        Self::new(Duration::from_millis(10))
     }
 }
 
@@ -78,20 +78,20 @@ mod asyncc {
     use stopwatch::Stopwatch;
     use tokio::{sync::Mutex, time::sleep};
 
-    use crate::{ReadyChecksConfig, TimeoutError};
+    use crate::TimeoutError;
 
     pub struct AsyncTimeGate {
         ready_flag: Arc<Mutex<bool>>,
-        ready_checks: ReadyChecksConfig,
+        ready_checks_interval: Duration,
     }
 
     pub type AsyncReadyFn<'a> = Box<dyn Fn() -> BoxFuture<'a, ()> + Send + Sync>;
 
     impl AsyncTimeGate {
-        pub fn new() -> Self {
+        pub fn new(ready_checks_interval: Duration) -> Self {
             AsyncTimeGate {
                 ready_flag: Arc::new(Mutex::new(false)),
-                ready_checks: ReadyChecksConfig::default(),
+                ready_checks_interval,
             }
         }
 
@@ -109,7 +109,7 @@ mod asyncc {
 
         pub async fn wait_signal(self) {
             while !self.is_ready().await {
-                sleep(self.ready_checks.duration).await;
+                sleep(self.ready_checks_interval).await;
             }
         }
 
@@ -120,10 +120,10 @@ mod asyncc {
                 if stopwatch.elapsed() >= timeout {
                     return Err(TimeoutError {
                         duration: timeout,
-                        ready_checks: self.ready_checks,
+                        ready_checks_interval: self.ready_checks_interval,
                     });
                 }
-                sleep(self.ready_checks.duration).await;
+                sleep(self.ready_checks_interval).await;
             }
 
             Ok(())
@@ -136,7 +136,7 @@ mod asyncc {
 
     impl Default for AsyncTimeGate {
         fn default() -> Self {
-            Self::new()
+            Self::new(Duration::from_millis(10))
         }
     }
 
@@ -147,13 +147,13 @@ mod asyncc {
         use stopwatch::Stopwatch;
         use tokio::{spawn, time::sleep};
 
-        use crate::{AsyncTimeGate, ReadyChecksConfig, TimeoutError};
+        use crate::{AsyncTimeGate, TimeoutError};
 
         #[tokio::test]
         async fn it_waits_signal() {
             let stopwatch = Stopwatch::start_new();
 
-            let gate = AsyncTimeGate::new();
+            let gate = AsyncTimeGate::default();
             let ready = gate.notifier();
 
             spawn(async move {
@@ -171,7 +171,7 @@ mod asyncc {
         async fn it_waits_signal_even_with_timeout_option() {
             let stopwatch = Stopwatch::start_new();
 
-            let gate = AsyncTimeGate::new();
+            let gate = AsyncTimeGate::default();
             let ready = gate.notifier();
 
             spawn(async move {
@@ -190,7 +190,7 @@ mod asyncc {
         async fn it_timeouts() {
             let stopwatch = Stopwatch::start_new();
 
-            let gate = AsyncTimeGate::new();
+            let gate = AsyncTimeGate::default();
             let ready = gate.notifier();
 
             spawn(async move {
@@ -203,7 +203,7 @@ mod asyncc {
                 gate.wait_signal_or_timeout(Duration::from_millis(85)).await,
                 Err(TimeoutError {
                     duration: timeout,
-                    ready_checks: ReadyChecksConfig::default(),
+                    ready_checks_interval: Duration::from_millis(10),
                 })
             );
             assert_around_100ms_(&stopwatch);
@@ -226,13 +226,13 @@ mod test {
 
     use stopwatch::Stopwatch;
 
-    use crate::{ReadyChecksConfig, TimeGate, TimeoutError};
+    use crate::{TimeGate, TimeoutError};
 
     #[test]
     fn it_waits_signal() {
         let stopwatch = Stopwatch::start_new();
 
-        let gate = TimeGate::new();
+        let gate = TimeGate::default();
         let ready = gate.notifier();
 
         spawn(move || {
@@ -248,7 +248,7 @@ mod test {
     fn it_waits_signal_even_with_timeout_option() {
         let stopwatch = Stopwatch::start_new();
 
-        let gate = TimeGate::new();
+        let gate = TimeGate::default();
         let ready = gate.notifier();
 
         spawn(move || {
@@ -266,7 +266,7 @@ mod test {
     fn it_timeouts() {
         let stopwatch = Stopwatch::start_new();
 
-        let gate = TimeGate::new();
+        let gate = TimeGate::default();
         let ready = gate.notifier();
 
         spawn(move || {
@@ -279,7 +279,7 @@ mod test {
             gate.wait_signal_or_timeout(Duration::from_millis(85)),
             Err(TimeoutError {
                 duration: timeout,
-                ready_checks: ReadyChecksConfig::default(),
+                ready_checks_interval: Duration::from_millis(10),
             })
         );
         assert_around_100ms_(&stopwatch);

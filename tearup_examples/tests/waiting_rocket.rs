@@ -30,7 +30,7 @@ impl<'a> AsyncSimpleContext<'a> for RocketContext {
     async fn setup(shared_context: AsyncSharedContext) -> Self {
         let port = choose_port().await;
 
-        let gate = AsyncTimeGate::new();
+        let gate = AsyncTimeGate::default();
 
         let _srv_life = launch_server_then_notif_ready(port, gate.notifier()).await;
 
