@@ -1,17 +1,15 @@
 pub use tearup_macro::{tearup, tearup_test};
 
-use crate::{SharedContext, SimpleContext};
+use crate::{Context, SharedContext};
 #[cfg(feature = "async")]
 pub use asyncc::*;
 
-pub struct ContextCombinator<Context1: SimpleContext, Context2: SimpleContext> {
+pub struct ContextCombinator<Context1: Context, Context2: Context> {
     context1: Context1,
     context2: Context2,
 }
 
-impl<Context1: SimpleContext, Context2: SimpleContext> SimpleContext
-    for ContextCombinator<Context1, Context2>
-{
+impl<Context1: Context, Context2: Context> Context for ContextCombinator<Context1, Context2> {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
@@ -35,22 +33,22 @@ mod asyncc {
     use async_trait::async_trait;
     pub use tearup_macro::{tearup, tearup_test};
 
-    use crate::{AsyncSharedContext, AsyncSimpleContext};
+    use crate::{AsyncContext, AsyncSharedContext};
 
     pub struct AsyncContextCombinator<Context1, Context2>
     where
-        for<'a> Context1: AsyncSimpleContext<'a> + Send,
-        for<'a> Context2: AsyncSimpleContext<'a> + Send,
+        for<'a> Context1: AsyncContext<'a> + Send,
+        for<'a> Context2: AsyncContext<'a> + Send,
     {
         context1: Context1,
         context2: Context2,
     }
 
     #[async_trait]
-    impl<Context1, Context2> AsyncSimpleContext<'_> for AsyncContextCombinator<Context1, Context2>
+    impl<Context1, Context2> AsyncContext<'_> for AsyncContextCombinator<Context1, Context2>
     where
-        for<'a> Context1: AsyncSimpleContext<'a> + Send,
-        for<'a> Context2: AsyncSimpleContext<'a> + Send,
+        for<'a> Context1: AsyncContext<'a> + Send,
+        for<'a> Context2: AsyncContext<'a> + Send,
     {
         async fn setup(shared_context: AsyncSharedContext) -> Self {
             let context1 = Context1::launch_setup(shared_context.clone()).await;

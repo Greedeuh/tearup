@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use std::time::Duration;
 use tearup::{
     helper::{async_ready_when, ready_when},
-    tearup_test, AsyncSharedContext, AsyncSimpleContext, FutureExt, SharedContext, SimpleContext,
+    tearup_test, AsyncContext, AsyncSharedContext, Context, FutureExt, SharedContext,
 };
 
 #[tearup_test(AsyncReadyWhenContext)]
@@ -11,7 +11,7 @@ async fn setup_barely_timeout_with_ready_when() {}
 struct AsyncReadyWhenContext;
 
 #[async_trait]
-impl AsyncSimpleContext<'_> for AsyncReadyWhenContext {
+impl AsyncContext<'_> for AsyncReadyWhenContext {
     async fn setup(_shared_context: AsyncSharedContext) -> Self {
         launch_server();
 
@@ -36,7 +36,7 @@ async fn ping_server() -> Result<(), ()> {
 struct SyncReadyWhenContext;
 
 #[async_trait]
-impl SimpleContext for SyncReadyWhenContext {
+impl Context for SyncReadyWhenContext {
     fn setup(_shared_context: &mut SharedContext) -> Self {
         launch_server();
 

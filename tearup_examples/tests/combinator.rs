@@ -1,4 +1,4 @@
-use tearup::{tearup_test, ContextCombinator, SharedContext, SimpleContext};
+use tearup::{tearup_test, Context, ContextCombinator, SharedContext};
 
 type CombinationContext = ContextCombinator<DbContext, ServerContext>;
 
@@ -12,7 +12,7 @@ fn it_setup_a_fake_db_and_a_server(mut db: DbClient, url: Url) {
 
 struct DbContext {}
 
-impl SimpleContext for DbContext {
+impl Context for DbContext {
     fn setup(shared_context: &mut SharedContext) -> Self {
         let mut db_client = DbClient::new("random_db_name");
 
@@ -30,7 +30,7 @@ impl SimpleContext for DbContext {
 
 struct ServerContext {}
 
-impl SimpleContext for ServerContext {
+impl Context for ServerContext {
     fn setup(shared_context: &mut SharedContext) -> Self {
         // use db provided by DbContext
         let db = shared_context.get::<DbClient>().unwrap();

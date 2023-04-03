@@ -1,6 +1,6 @@
 use diesel::{prelude::*, sql_types::Bool, Connection, PgConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use tearup::{tearup, SharedContext, SimpleContext};
+use tearup::{tearup, Context, SharedContext};
 use uuid::Uuid;
 
 // or #[tearup_test(SimpleContextX)]
@@ -12,7 +12,7 @@ fn it_setup_a_fake_db(mut db: DbClient) {
 
 struct SimpleContextX {}
 
-impl SimpleContext for SimpleContextX {
+impl Context for SimpleContextX {
     fn setup(shared_context: &mut SharedContext) -> Self {
         let db_name = dbg!(format!("go_{}", Uuid::new_v4().simple()));
 

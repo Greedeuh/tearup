@@ -14,7 +14,7 @@ pub fn body(
     let result = quote! {
 
         #(#attrs)* fn #name() {
-            use tearup::{SharedContext, SimpleContext};
+            use tearup::{SharedContext, Context};
 
             let mut shared_context = SharedContext::default();
             let mut context = #context::launch_setup(&mut shared_context);

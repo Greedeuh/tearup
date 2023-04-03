@@ -1,4 +1,4 @@
-use tearup::{SharedContext, SimpleContext};
+use tearup::{Context, SharedContext};
 
 mod asserts;
 pub use asserts::*;
@@ -10,7 +10,7 @@ pub struct FirstProof(pub String);
 pub struct SecondProof(pub String);
 
 pub struct FirstFullContext;
-impl SimpleContext for FirstFullContext {
+impl Context for FirstFullContext {
     fn setup(shared_context: &mut SharedContext) -> Self {
         shared_context.register(FirstProof("first_proof".to_owned()));
         shared_context.register(SecondProof("second_proof".to_owned()));
@@ -26,7 +26,7 @@ pub struct ThirdProof(pub String);
 pub struct FourthProof(pub String);
 
 pub struct SecondFullContext;
-impl SimpleContext for SecondFullContext {
+impl Context for SecondFullContext {
     fn setup(shared_context: &mut SharedContext) -> Self {
         let first = shared_context.get::<FirstProof>().unwrap().0;
         shared_context.register(ThirdProof(format!("ref_to_{}", first)));
@@ -41,13 +41,13 @@ impl SimpleContext for SecondFullContext {
 
 #[cfg(feature = "async")]
 pub mod asyncc {
-    use tearup::{async_trait, AsyncSharedContext, AsyncSimpleContext};
+    use tearup::{async_trait, AsyncContext, AsyncSharedContext};
 
     use crate::helper::{FirstProof, FourthProof, SecondProof, ThirdProof};
 
     pub struct AsyncFirstFullContext;
     #[async_trait]
-    impl AsyncSimpleContext<'_> for AsyncFirstFullContext {
+    impl AsyncContext<'_> for AsyncFirstFullContext {
         async fn setup(shared_context: AsyncSharedContext) -> Self {
             shared_context
                 .register(FirstProof("first_proof".to_owned()))
@@ -63,7 +63,7 @@ pub mod asyncc {
 
     pub struct AsyncSecondFullContext;
     #[async_trait]
-    impl AsyncSimpleContext<'_> for AsyncSecondFullContext {
+    impl AsyncContext<'_> for AsyncSecondFullContext {
         async fn setup(mut shared_context: AsyncSharedContext) -> Self {
             let first = shared_context.get::<FirstProof>().await.unwrap().0;
             shared_context

@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use std::time::{Duration, SystemTime};
-use tearup::{tearup, ContextCombinator, SharedContext, SimpleContext};
+use tearup::{tearup, Context, ContextCombinator, SharedContext};
 
 use crate::helper::{assert_order, Checkpoint};
 
@@ -25,7 +25,7 @@ type B = ContextCombinator<FirstContext, SecondContext>;
 fn sequential() {}
 
 pub struct FirstContext;
-impl SimpleContext for FirstContext {
+impl Context for FirstContext {
     fn setup(_shared_context: &mut SharedContext) -> Self {
         let mut checkpoint = FIRST_SETUP_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
@@ -42,7 +42,7 @@ impl SimpleContext for FirstContext {
 }
 
 pub struct SecondContext;
-impl SimpleContext for SecondContext {
+impl Context for SecondContext {
     fn setup(_shared_context: &mut SharedContext) -> Self {
         let mut checkpoint = SECOND_SETUP_CHECKPOINT.lock().unwrap();
         *checkpoint = Some(SystemTime::now());
@@ -61,9 +61,7 @@ impl SimpleContext for SecondContext {
 mod asyncc {
     use lazy_static::lazy_static;
     use std::time::{Duration, SystemTime};
-    use tearup::{
-        async_trait, tearup, AsyncContextCombinator, AsyncSharedContext, AsyncSimpleContext,
-    };
+    use tearup::{async_trait, tearup, AsyncContext, AsyncContextCombinator, AsyncSharedContext};
     use tokio::time::sleep;
 
     use crate::helper::{assert_async_order, AsyncCheckpoint};
@@ -90,7 +88,7 @@ mod asyncc {
 
     pub struct FirstContext;
     #[async_trait]
-    impl AsyncSimpleContext<'_> for FirstContext {
+    impl AsyncContext<'_> for FirstContext {
         async fn setup(_shared_context: AsyncSharedContext) -> Self {
             let mut checkpoint = FIRST_SETUP_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());
@@ -108,7 +106,7 @@ mod asyncc {
 
     pub struct SecondContext;
     #[async_trait]
-    impl AsyncSimpleContext<'_> for SecondContext {
+    impl AsyncContext<'_> for SecondContext {
         async fn setup(_shared_context: AsyncSharedContext) -> Self {
             let mut checkpoint = SECOND_SETUP_CHECKPOINT.lock().await;
             *checkpoint = Some(SystemTime::now());

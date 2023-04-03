@@ -6,7 +6,7 @@ use reqwest::StatusCode;
 use rocket::fairing::AdHoc;
 use tearup::{
     helper::{AsyncReadyFn, AsyncTimeGate},
-    tearup_test, AsyncSharedContext, AsyncSimpleContext,
+    tearup_test, AsyncContext, AsyncSharedContext,
 };
 use tearup_examples::rocket;
 
@@ -29,7 +29,7 @@ lazy_static! {
 }
 
 #[async_trait]
-impl<'a> AsyncSimpleContext<'a> for RocketContext {
+impl<'a> AsyncContext<'a> for RocketContext {
     async fn setup(shared_context: AsyncSharedContext) -> Self {
         let port = choose_port().await;
 

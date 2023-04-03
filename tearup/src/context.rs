@@ -5,7 +5,7 @@ use crate::SharedContext;
 pub use asyncc::*;
 
 /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
-pub trait SimpleContext: Sized {
+pub trait Context: Sized {
     /// Will be executed before the test execution
     /// You should prepare all your test requirement here.
     /// Use the `ready` to notify that the test can start
@@ -45,7 +45,7 @@ mod asyncc {
 
     /// Trait to implement to use the `#[tearup_test]` or `#[tearup]`
     #[async_trait]
-    pub trait AsyncSimpleContext<'a>: Sync + Send + Sized {
+    pub trait AsyncContext<'a>: Sync + Send + Sized {
         /// Will be executed before the test execution
         /// You should prepare all your test requirement here.
         /// Use the `ready` to notify that the test can start

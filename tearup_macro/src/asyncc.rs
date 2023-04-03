@@ -14,7 +14,7 @@ pub fn body(
     let result = quote! {
 
         #(#attrs)* async fn #name() {
-            use tearup::{AsyncSimpleContext, AsyncSharedContext, FutureExt};
+            use tearup::{AsyncContext, AsyncSharedContext, FutureExt};
 
             let mut shared_context = AsyncSharedContext::default();
             let mut context = #context::launch_setup(shared_context.clone()).await;
