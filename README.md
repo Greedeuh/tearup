@@ -19,79 +19,77 @@ tearup = "0.2"
 
 ## Usage
 
-Your test will look like this:
+The macros `#[tearup(MyContext)]` executes the `setup` then the method annoted and finally the `teardown`.
+The `#[tearup_test(MyContext)]` act the same + add the `#[test]` on the method.
 
 ```rust
-#[tearup_test(DbContext)]
-async fn it_should_do_that(mut db: DbConnection) {
-    // assert something
-}
-
 #[tearup_test(WebContext)]
 fn it_should_do_this(address: Address) {
     // assert something
 }
 
-type BothContext = ConcurrentContextCombinator<DbContext, AnotherContext>;
-#[tearup_test(BothContext)]
-fn it_should_do_this(mut db: DbConnection, address: Address) {
+#[tearup_test(DbContext)]
+async fn it_should_do_that(mut db: DbConnection, address: Address) {
     // assert something
 }
 ```
 
-1. Choose your context (async versions exist too):
-   - `SimpleContext`: for basic setup/teardown actions
-   - `WaitingContext`: in case your setup/teardown are asyncronous and you need a polling/notification helper ([here an example waiting a rocket server to be up](/tearup_examples/waiting_rockets.rs))
-2. Implement it, here the simple async implementation:
+To do this you'll need to implement `Context` trait with both `setup` and `teardown` methods.
 
 ```rust
 use async_trait::async_trait;
-use tearup::{tearup_test, AsyncSimpleContext, FromAsyncContext};
+use tearup::tearup_test;
 
-// First define your context
+// Define your context
 struct YourContext {
-    something_you_need_in_test: SomethingYouSetup,
+    something_you_need_in_teardown: SomethingYouSetup,
 }
 
-// Second implement your setup/teardown
 #[async_trait]
-impl<'a> AsyncSimpleContext<'a> for YourContext {
-    async fn setup() -> Self {
-        /* --> do your stuff here <-- */
-        Self { something_you_need_in_test: SomethingYouSetup{} }
+impl Context for YourContext {
+    async fn setup(shared_context: &mut SharedContext) -> Self {
+        /* --> do your setup here <-- */
+
+        // Register struct that you want to access in your test
+        shared_context.register(SomethingYouNeedInTest{});
+
+        // You still can store things in your struct for the treardown step
+        Self { something_you_need_in_teardown: SomethingYouSetup{} }
     }
 
-    async fn teardown(mut self) { /* --> clean your stuff here <-- */ }
+    async fn teardown(mut self, shared_context: &mut SharedContext) {
+        /* --> clean your stuff here <-- */
+
+        // You still have access to the shared context
+        shared_context.get::<SomethingYouNeedInTest>();
+        // Same for self
+        self.something_you_need_in_teardown;
+    }
 }
 
-// Optionnaly define some setup accessor
-// if you need to access something from your setup (like db connection, seed, etc)
+/// Type you need to access in test (registered in the SharedContext) must implement `Clone`
 #[derive(Clone)]
-pub struct SomethingYouSetup;
-#[async_trait]
-impl FromAsyncContext<'_, YourContext> for SomethingYouSetup {
-    async fn from_context(context: &YourContext) -> Self {
-        context.something_you_need_in_test.clone()
-    }
-}
+struct SomethingYouNeedInTest;
 
-// And write your tests !
-#[tearup_test(YourContext)]
-async fn it_should_do_that(mut something_you_need_in_test: SomethingYouSetup) {
-    // assert something using something_you_need_in_test
-}
+struct SomethingYouSetup;
 ```
 
-3. Combine your contexts with (async versions exist too):
-   - `SequentialContextCombinator`: executing setup/teardown one after the other, usefull when one context require the other
-   - `ConcurrentContextCombinator`: executing setup/teardown actions in parallel
+You can also combine your contexts with `ContextCombinator`:
 
 ```rust
-type BothContext = ConcurrentContextCombinator<YourContext, AnotherContext>;
-#[tearup_test(BothContext)]
+type Both = ConcurrentContextCombinator<YourContext, AnotherContext>;
+#[tearup_test(Both)]
 fn it_should_do_this(mut something_you_need_in_test: DbConnection, something_from_the_other_context: Address) {
+    // assert something
+}
+
+type MoreCombinaison = ConcurrentContextCombinator<YourContext, AnotherContext>;
+#[tearup_test(MoreCombinaison)]
+fn it_should_do_that(mut something_you_need_in_test: DbConnection, something_from_the_other_context: Address) {
     // assert something
 }
 ```
 
-[More examples here](/tearup_examples)
+## Examples
+
+[More examples here](/tearup_examples/tests)
