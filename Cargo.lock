@@ -1695,7 +1695,7 @@ dependencies = [
  "lazy_static",
  "macrotest",
  "stopwatch",
- "tearup_macro 0.3.0",
+ "tearup_macro 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio",
 ]
 
@@ -1737,6 +1737,17 @@ dependencies = [
  "tearup 0.2.0",
  "tokio",
  "trybuild",
+]
+
+[[package]]
+name = "tearup_macro"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e7ed81342775569033b24345d4981f929ac7c8b3b9a3267dbc0d55be25900be"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
